@@ -1,24 +1,17 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!--<TreatWarningsAsErrors>true</TreatWarningsAsErrors>-->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Deterministic>true</Deterministic>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <AccelerateBuildsInVisualStudio>true</AccelerateBuildsInVisualStudio>
+    <Version>0.0.1</Version>
   </PropertyGroup>
 
-  <ItemGroup Label="NuGet">
-    <!-- 
-    Ensure the icon is included in the NuGet package
-    https://learn.microsoft.com/nuget/reference/msbuild-targets#packing-an-icon-image-file
-    -->
-    <None Include="NuGetIcon.png" Pack="true" PackagePath="\" />
-  </ItemGroup>
-
   <ItemGroup>
-    <None Include="..\README.md" Pack="true" PackagePath="\"/>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
     <PackageReference Include="Microsoft.SourceLink.GitHub">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

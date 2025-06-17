@@ -1,6 +1,6 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <AccelerateBuildsInVisualStudio>true</AccelerateBuildsInVisualStudio>
 
     <IsPublishable>false</IsPublishable>
@@ -9,10 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AwesomeAssertions" />
     <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="IntelliTect.Multitool" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
-    <PackageReference Include="Moq" />
-    <PackageReference Include="Moq.AutoMock" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
   </ItemGroup>
@@ -23,6 +23,9 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
-    <Using Include="Moq.AutoMock" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="SampleTrxFiles\" />
   </ItemGroup>
 </Project>
