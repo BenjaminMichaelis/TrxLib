@@ -133,7 +133,7 @@ public class TrxParserTests
         test.Outcome.Should().Be(TestOutcome.Failed);
     }
 
-    [Fact]
+    [ConditionalFact(nameof(IsWindows))]
     public void Parse_Example1WindowsTrx_ParsesTestProjectDirectoryCorrectly()
     {
         var results = TrxParser.Parse(new FileInfo(GetSampleFilePath(Path.Combine("example1_Windows.trx"))));
@@ -141,7 +141,7 @@ public class TrxParserTests
         test.TestProjectDirectory?.FullName.Should().Be(@"C:\dev\github\cli\test\Microsoft.DotNet.Cli.Sln.Internal.Tests");
     }
 
-    [Fact]
+    [ConditionalFact(nameof(IsWindows))]
     public void Parse_Example1WindowsTrx_ParsesCodebaseCorrectly()
     {
         var results = TrxParser.Parse(new FileInfo(GetSampleFilePath(Path.Combine("example1_Windows.trx"))));
@@ -155,6 +155,11 @@ public class TrxParserTests
         var results = TrxParser.Parse(new FileInfo(GetSampleFilePath(Path.Combine("1", "example1_OSX.trx"))));
         var test = results.Single(r => r.FullyQualifiedTestName == "Microsoft.DotNet.Cli.Utils.Tests.GivenARootedCommandResolver.It_escapes_CommandArguments_when_returning_a_CommandSpec");
         test.TestProjectDirectory?.FullName.Should().Be(@"/Users/josequ/dev/cli/test/Microsoft.DotNet.Cli.Utils.Tests/");
+    }
+
+    private static bool IsWindows()
+    {
+        return RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
     }
 
     private static bool NotWindows()
