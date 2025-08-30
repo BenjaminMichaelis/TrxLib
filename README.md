@@ -12,11 +12,21 @@ TrxLib is a .NET library for parsing and analyzing TRX (Test Results XML) files 
 
 ## Installation
 
-### NuGet Package ManagerInstall-Package TrxLib
+TrxLib is available as a NuGet package: https://www.nuget.org/packages/TrxLib
+
+### Package Manager Console
+```
+Install-Package TrxLib
+```
+
 ### .NET CLI
-    `dotnet add package TrxLib`
+```
+dotnet add package TrxLib
+```
+
 ## Quick Start
 
+```csharp
 // Parse a TRX file
 TestResultSet results = TrxParser.Parse(new FileInfo("path/to/results.trx"));
 
@@ -43,9 +53,13 @@ foreach (TestResult test in results.Failed)
 // Access test run metadata
 string runId = results.OriginalTestRun?.Id;
 string deploymentRoot = results.OriginalTestRun?.TestSettings?.Deployment?.RunDeploymentRoot;
+```
+
 ## Working with Test Results
 
 Each `TestResult` object contains detailed information about a single test case:
+
+```csharp
 TestResult test = results.FirstOrDefault(r => r.Outcome == TestOutcome.Failed);
 
 // Basic test information
@@ -67,9 +81,13 @@ string stackTrace = test.StackTrace;                 // The stack trace
 // Test source information
 FileInfo codebase = test.Codebase;                   // Path to the test assembly
 DirectoryInfo projectDir = test.TestProjectDirectory; // Directory of the test project
+```
+
 ## Working with Test Result Sets
 
 The `TestResultSet` class provides aggregated views of test results:
+
+```csharp
 // Group tests by outcome
 IReadOnlyCollection<TestResult> passedTests = results.Passed;
 IReadOnlyCollection<TestResult> failedTests = results.Failed;
@@ -86,6 +104,8 @@ var testsByClassName = results.GroupBy(r => r.ClassName);
 // Test run metadata
 string testRunName = results.TestRunName;
 string testFilePath = results.TestFilePath;
+```
+
 ## License
 
 [MIT License](LICENSE)
