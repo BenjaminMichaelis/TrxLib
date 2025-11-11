@@ -113,4 +113,3 @@ string testFilePath = results.TestFilePath;
 ## Credits
 
 Inspired by [t-rex](https://github.com/jonsequitur/t-rex).
-
