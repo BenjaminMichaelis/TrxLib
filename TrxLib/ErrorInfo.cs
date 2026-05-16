@@ -1,5 +1,3 @@
-using System.Xml.Serialization;
-
 namespace TrxLib;
 
 /// <summary>
@@ -11,13 +9,11 @@ public class ErrorInfo
     /// <summary>
     /// Gets or sets the error message describing why the test failed.
     /// </summary>
-    [XmlElement("Message")]
     public string? Message { get; set; }
 
     /// <summary>
     /// Gets or sets the stack trace information from the test failure.
     /// Contains the call stack at the point of the exception that caused the test to fail.
     /// </summary>
-    [XmlElement("StackTrace")]
     public string? StackTrace { get; set; }
 }

@@ -1,4 +1,4 @@
-﻿using System.Xml.Serialization;
+﻿using System.Xml.Linq;
 
 namespace TrxLib;
 
@@ -7,6 +7,8 @@ namespace TrxLib;
 /// </summary>
 public class TrxParser
 {
+    private static readonly XNamespace TrxNs = XNamespace.Get("http://microsoft.com/schemas/VisualStudio/TeamTest/2010");
+
     /// <summary>
     /// Parses a TRX file and converts it into a TestResultSet containing structured test results.
     /// </summary>
@@ -15,8 +17,7 @@ public class TrxParser
     public static TestResultSet Parse(FileInfo trxFile)
     {
         using var stream = trxFile.OpenRead();
-        var serializer = new XmlSerializer(typeof(TestRun));
-        TestRun? testRun = serializer.Deserialize(stream) as TestRun;
+        TestRun? testRun = DeserializeTestRun(stream);
         if (testRun == null)
             return new TestResultSet();
 
@@ -149,5 +150,119 @@ public class TrxParser
             testResultSet.CompletedTime = finishTime.Value;
 
         return testResultSet;
+    }
+
+    private static TestRun? DeserializeTestRun(Stream stream)
+    {
+        XDocument doc;
+        try
+        {
+            doc = XDocument.Load(stream);
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+
+        var root = doc.Root;
+        if (root == null)
+            return null;
+
+        var testRun = new TestRun
+        {
+            Name = (string?)root.Attribute("name"),
+            Id = (string?)root.Attribute("id"),
+        };
+
+        var timesEl = root.Element(TrxNs + "Times");
+        if (timesEl != null)
+        {
+            testRun.Times = new Times
+            {
+                Creation = (string?)timesEl.Attribute("creation"),
+                Queuing = (string?)timesEl.Attribute("queuing"),
+                Start = (string?)timesEl.Attribute("start"),
+                Finish = (string?)timesEl.Attribute("finish"),
+            };
+        }
+
+        var testSettingsEl = root.Element(TrxNs + "TestSettings");
+        if (testSettingsEl != null)
+        {
+            testRun.TestSettings = new TestSettings
+            {
+                Name = (string?)testSettingsEl.Attribute("name"),
+                Id = (string?)testSettingsEl.Attribute("id"),
+                Deployment = testSettingsEl.Element(TrxNs + "Deployment") is XElement deployEl
+                    ? new Deployment { RunDeploymentRoot = (string?)deployEl.Attribute("runDeploymentRoot") }
+                    : null,
+            };
+        }
+
+        var testDefsEl = root.Element(TrxNs + "TestDefinitions");
+        if (testDefsEl != null)
+        {
+            testRun.TestDefinitions = new TestDefinitions
+            {
+                UnitTests = testDefsEl.Elements(TrxNs + "UnitTest").Select(ut =>
+                {
+                    var tmEl = ut.Element(TrxNs + "TestMethod");
+                    return new UnitTest
+                    {
+                        Id = (string?)ut.Attribute("id"),
+                        Name = (string?)ut.Attribute("name"),
+                        TestMethod = tmEl != null ? new TestMethod
+                        {
+                            CodeBase = (string?)tmEl.Attribute("codeBase"),
+                            ClassName = (string?)tmEl.Attribute("className"),
+                            Name = (string?)tmEl.Attribute("name"),
+                            AdapterTypeName = (string?)tmEl.Attribute("adapterTypeName"),
+                        } : null,
+                    };
+                }).ToList(),
+            };
+        }
+
+        var resultsEl = root.Element(TrxNs + "Results");
+        if (resultsEl != null)
+        {
+            testRun.Results = new Results
+            {
+                UnitTestResults = resultsEl.Elements(TrxNs + "UnitTestResult").Select(ur =>
+                {
+                    Output? output = null;
+                    if (ur.Element(TrxNs + "Output") is XElement outputEl)
+                    {
+                        ErrorInfo? errorInfo = null;
+                        if (outputEl.Element(TrxNs + "ErrorInfo") is XElement errorInfoEl)
+                        {
+                            errorInfo = new ErrorInfo
+                            {
+                                Message = (string?)errorInfoEl.Element(TrxNs + "Message"),
+                                StackTrace = (string?)errorInfoEl.Element(TrxNs + "StackTrace"),
+                            };
+                        }
+                        output = new Output
+                        {
+                            StdOut = (string?)outputEl.Element(TrxNs + "StdOut"),
+                            ErrorInfo = errorInfo,
+                        };
+                    }
+                    return new UnitTestResult
+                    {
+                        TestId = (string?)ur.Attribute("testId"),
+                        TestName = (string?)ur.Attribute("testName"),
+                        Outcome = (string?)ur.Attribute("outcome"),
+                        StartTime = (string?)ur.Attribute("startTime"),
+                        EndTime = (string?)ur.Attribute("endTime"),
+                        Duration = (string?)ur.Attribute("duration"),
+                        ComputerName = (string?)ur.Attribute("computerName"),
+                        Output = output,
+                    };
+                }).ToList(),
+            };
+        }
+
+        return testRun;
     }
 }

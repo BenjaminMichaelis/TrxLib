@@ -1,5 +1,3 @@
-using System.Xml.Serialization;
-
 namespace TrxLib;
 
 /// <summary>
@@ -11,6 +9,5 @@ public class Deployment
     /// <summary>
     /// Gets or sets the root directory path where test run files are deployed.
     /// </summary>
-    [XmlAttribute("runDeploymentRoot")]
     public string? RunDeploymentRoot { get; set; }
 }
