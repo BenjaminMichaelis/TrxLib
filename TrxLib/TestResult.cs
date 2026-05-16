@@ -35,29 +35,55 @@ public class TestResult
         StdOut = stdOut;
         TestMethod = testMethod;
 
-        var testNameParts = fullyQualifiedTestName.Split('.');
-
-        if (testNameParts.Length > 1)
+        if (testMethod != null && !string.IsNullOrEmpty(testMethod.ClassName))
         {
-            var testName = testNameParts[^1];
-            var className = testNameParts[^2];
-            var fullyQualifiedClassName = string.Join(".", testNameParts.Take(testNameParts.Length - 1));
-            var @namespace = string.Join(".", testNameParts.Take(testNameParts.Length - 2));
-
-            // only infer these if fullyQualifiedTestName is typical of .NET tests
-            if (!fullyQualifiedClassName.Contains(" "))
+            // Use the authoritative TRX TestMethod.className field directly.
+            // Splitting the FQTN on '.' is unreliable when theory-test parameter
+            // values contain dots (e.g. "(param: \"foo.bar\")").
+            FullyQualifiedClassName = testMethod.ClassName;
+            var lastDot = testMethod.ClassName.LastIndexOf('.');
+            if (lastDot >= 0)
             {
-                TestName = testName;
-                ClassName = className;
-                FullyQualifiedClassName = fullyQualifiedClassName;
-                Namespace = @namespace;
+                ClassName = testMethod.ClassName[(lastDot + 1)..];
+                Namespace = testMethod.ClassName[..lastDot];
+            }
+            else
+            {
+                ClassName = testMethod.ClassName;
             }
 
+            // TestName = everything after "FullyQualifiedClassName." in the FQTN,
+            // which preserves the theory-test parameter suffix intact.
+            var prefix = testMethod.ClassName + ".";
+            TestName = fullyQualifiedTestName.StartsWith(prefix, StringComparison.Ordinal)
+                ? fullyQualifiedTestName[prefix.Length..]
+                : (testMethod.Name ?? fullyQualifiedTestName);
         }
-
-        if (string.IsNullOrEmpty(TestName))
+        else
         {
-            TestName = FullyQualifiedTestName;
+            // Fallback: derive from dot-splitting the FQTN.
+            // Works for standard dotted names; breaks only when parameter values
+            // contain dots and no testMethod metadata is available.
+            var testNameParts = fullyQualifiedTestName.Split('.');
+
+            if (testNameParts.Length > 1)
+            {
+                var fullyQualifiedClassName = string.Join(".", testNameParts.Take(testNameParts.Length - 1));
+
+                // only infer these if fullyQualifiedTestName is typical of .NET tests
+                if (!fullyQualifiedClassName.Contains(" "))
+                {
+                    TestName = testNameParts[^1];
+                    ClassName = testNameParts[^2];
+                    FullyQualifiedClassName = fullyQualifiedClassName;
+                    Namespace = string.Join(".", testNameParts.Take(testNameParts.Length - 2));
+                }
+            }
+
+            if (string.IsNullOrEmpty(TestName))
+            {
+                TestName = FullyQualifiedTestName;
+            }
         }
     }
 
