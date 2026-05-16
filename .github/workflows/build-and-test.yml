@@ -55,3 +55,8 @@ jobs:
   
       - name: Test
         run: dotnet test --no-build --configuration Release --verbosity normal
+
+      - name: AOT Publish Validation
+        run: |
+          $rid = if ($env:RUNNER_OS -eq 'Windows') { 'win-x64' } else { 'linux-x64' }
+          dotnet publish TrxLib.AotSample/TrxLib.AotSample.csproj -r $rid -c Release --self-contained
