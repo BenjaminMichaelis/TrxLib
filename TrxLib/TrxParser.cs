@@ -67,11 +67,23 @@ public class TrxParser
             {
                 if (!string.IsNullOrEmpty(testMethodDomain.ClassName) && !string.IsNullOrEmpty(testMethodDomain.Name))
                 {
-                    // If Name already starts with ClassName, use Name as-is
-                    if (testMethodDomain.Name.StartsWith(testMethodDomain.ClassName + "."))
-                        fullyQualifiedTestName = testMethodDomain.Name;
-                    else
-                        fullyQualifiedTestName = $"{testMethodDomain.ClassName}.{testMethodDomain.Name}";
+                    string baseFqtn = testMethodDomain.Name.StartsWith(testMethodDomain.ClassName + ".")
+                        ? testMethodDomain.Name
+                        : $"{testMethodDomain.ClassName}.{testMethodDomain.Name}";
+
+                    // For parameterized/theory tests, testName carries the suffix (e.g. "(arg1, arg2)").
+                    // Extract the short method name and append the suffix from testName if present.
+                    var methodShortName = testMethodDomain.Name.Contains('.')
+                        ? testMethodDomain.Name.Substring(testMethodDomain.Name.LastIndexOf('.') + 1)
+                        : testMethodDomain.Name;
+                    var paramSuffix = string.Empty;
+                    if (result.TestName?.StartsWith(methodShortName) == true)
+                    {
+                        var candidate = result.TestName.Substring(methodShortName.Length);
+                        if (candidate.StartsWith("("))
+                            paramSuffix = candidate;
+                    }
+                    fullyQualifiedTestName = baseFqtn + paramSuffix;
                 }
                 else
                 {
@@ -136,6 +148,9 @@ public class TrxParser
         {
             TestRunName = testRun.Name ?? string.Empty,
             TestFilePath = trxFile.FullName,
+            TestRunId = testRun.Id ?? string.Empty,
+            DeploymentRoot = testRun.TestSettings?.Deployment?.RunDeploymentRoot ?? string.Empty,
+            TestSettingsName = testRun.TestSettings?.Name ?? string.Empty,
             OriginalTestRun = testRun
         };
 
@@ -159,7 +174,7 @@ public class TrxParser
         {
             doc = XDocument.Load(stream);
         }
-        catch (Exception)
+        catch (System.Xml.XmlException)
         {
             return null;
         }
@@ -172,6 +187,7 @@ public class TrxParser
         {
             Name = (string?)root.Attribute("name"),
             Id = (string?)root.Attribute("id"),
+            RunUser = (string?)root.Attribute("runUser"),
         };
 
         var timesEl = root.Element(TrxNs + "Times");
@@ -211,6 +227,10 @@ public class TrxParser
                     {
                         Id = (string?)ut.Attribute("id"),
                         Name = (string?)ut.Attribute("name"),
+                        Storage = (string?)ut.Attribute("storage"),
+                        Execution = ut.Element(TrxNs + "Execution") is XElement execEl
+                            ? new Execution { Id = (string?)execEl.Attribute("id") }
+                            : null,
                         TestMethod = tmEl != null ? new TestMethod
                         {
                             CodeBase = (string?)tmEl.Attribute("codeBase"),
@@ -257,8 +277,81 @@ public class TrxParser
                         EndTime = (string?)ur.Attribute("endTime"),
                         Duration = (string?)ur.Attribute("duration"),
                         ComputerName = (string?)ur.Attribute("computerName"),
+                        ExecutionId = (string?)ur.Attribute("executionId"),
+                        TestListId = (string?)ur.Attribute("testListId"),
+                        TestType = (string?)ur.Attribute("testType"),
+                        RelativeResultsDirectory = (string?)ur.Attribute("relativeResultsDirectory"),
                         Output = output,
                     };
+                }).ToList(),
+            };
+        }
+
+        var resultSummaryEl = root.Element(TrxNs + "ResultSummary");
+        if (resultSummaryEl != null)
+        {
+            Counters? counters = null;
+            if (resultSummaryEl.Element(TrxNs + "Counters") is XElement countersEl)
+            {
+                counters = new Counters
+                {
+                    Total = (int?)countersEl.Attribute("total") ?? 0,
+                    Executed = (int?)countersEl.Attribute("executed") ?? 0,
+                    Passed = (int?)countersEl.Attribute("passed") ?? 0,
+                    Failed = (int?)countersEl.Attribute("failed") ?? 0,
+                    Error = (int?)countersEl.Attribute("error") ?? 0,
+                    Timeout = (int?)countersEl.Attribute("timeout") ?? 0,
+                    Aborted = (int?)countersEl.Attribute("aborted") ?? 0,
+                    Inconclusive = (int?)countersEl.Attribute("inconclusive") ?? 0,
+                    PassedButRunAborted = (int?)countersEl.Attribute("passedButRunAborted") ?? 0,
+                    NotRunnable = (int?)countersEl.Attribute("notRunnable") ?? 0,
+                    NotExecuted = (int?)countersEl.Attribute("notExecuted") ?? 0,
+                    Disconnected = (int?)countersEl.Attribute("disconnected") ?? 0,
+                    Warning = (int?)countersEl.Attribute("warning") ?? 0,
+                    Completed = (int?)countersEl.Attribute("completed") ?? 0,
+                    InProgress = (int?)countersEl.Attribute("inProgress") ?? 0,
+                    Pending = (int?)countersEl.Attribute("pending") ?? 0,
+                };
+            }
+            Output? summaryOutput = null;
+            if (resultSummaryEl.Element(TrxNs + "Output") is XElement summaryOutputEl)
+            {
+                summaryOutput = new Output
+                {
+                    StdOut = (string?)summaryOutputEl.Element(TrxNs + "StdOut"),
+                };
+            }
+            testRun.ResultSummary = new ResultSummary
+            {
+                Outcome = (string?)resultSummaryEl.Attribute("outcome"),
+                Counters = counters,
+                Output = summaryOutput,
+            };
+        }
+
+        var testListsEl = root.Element(TrxNs + "TestLists");
+        if (testListsEl != null)
+        {
+            testRun.TestLists = new TestLists
+            {
+                Items = testListsEl.Elements(TrxNs + "TestList").Select(tl => new TestList
+                {
+                    Name = (string?)tl.Attribute("name"),
+                    Id = (string?)tl.Attribute("id"),
+                }).ToList(),
+            };
+        }
+
+        var testEntriesEl = root.Element(TrxNs + "TestEntries");
+        if (testEntriesEl != null)
+        {
+            testRun.TestEntries = new TestEntries
+            {
+                Items = testEntriesEl.Elements(TrxNs + "TestEntry").Select(te => new TestEntry
+                {
+                    TestId = (string?)te.Attribute("testId"),
+                    ExecutionId = (string?)te.Attribute("executionId"),
+                    TestListId = (string?)te.Attribute("testListId"),
                 }).ToList(),
             };
         }
