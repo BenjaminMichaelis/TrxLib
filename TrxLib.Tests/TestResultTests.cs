@@ -77,4 +77,15 @@ public class TestResultTests
         testResult.Namespace.Should().BeNull();
         testResult.TestName.Should().Be(fullyQualifiedTestName);
     }
+
+    [Fact]
+    public void ToString_DoesNotThrow_ForOutcomeValueNotInEnum()
+    {
+        // TestResult.ToString() has a _ => throw arm that crashes on any enum value
+        // not listed in its switch expression (e.g. future additions to TestOutcome, or
+        // values written by vstest that TrxLib doesn't yet map, such as "Completed").
+        var testResult = new TestResult("some.namespace.SomeClass.SomeTest", (TestOutcome)99);
+        var act = () => testResult.ToString();
+        act.Should().NotThrow<ArgumentOutOfRangeException>();
+    }
 }
