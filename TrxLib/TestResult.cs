@@ -146,7 +146,7 @@ public class TestResult
             TestOutcome.Inconclusive => "⚠️",
             TestOutcome.Timeout => "⌚",
             TestOutcome.Pending => "⏳",
-            _ => throw new ArgumentOutOfRangeException()
+            _ => "❓"
         };
 
         return $"{badge} {FullyQualifiedTestName}";

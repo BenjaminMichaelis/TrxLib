@@ -1,3 +1,5 @@
+using System.Xml.Serialization;
+
 namespace TrxLib;
 
 /// <summary>
@@ -7,5 +9,6 @@ namespace TrxLib;
 public class TestEntries
 {
     /// <summary>Gets or sets the individual test entry records.</summary>
+    [XmlElement("TestEntry")]
     public List<TestEntry>? Items { get; set; }
 }

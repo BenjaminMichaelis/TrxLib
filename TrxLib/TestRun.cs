@@ -44,4 +44,29 @@ public class TestRun
     /// </summary>
     [XmlElement("TestSettings")]
     public TestSettings? TestSettings { get; set; }
+
+    /// <summary>
+    /// Gets or sets the user account that initiated the test run.
+    /// </summary>
+    [XmlAttribute("runUser")]
+    public string? RunUser { get; set; }
+
+    /// <summary>
+    /// Gets or sets the result summary for the test run, including the overall outcome
+    /// and authoritative vstest-computed counters.
+    /// </summary>
+    [XmlElement("ResultSummary")]
+    public ResultSummary? ResultSummary { get; set; }
+
+    /// <summary>
+    /// Gets or sets the test list categories used to group results.
+    /// </summary>
+    [XmlElement("TestLists")]
+    public TestLists? TestLists { get; set; }
+
+    /// <summary>
+    /// Gets or sets the test entries index linking test IDs to execution IDs.
+    /// </summary>
+    [XmlElement("TestEntries")]
+    public TestEntries? TestEntries { get; set; }
 }

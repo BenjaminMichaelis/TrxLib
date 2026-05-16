@@ -1,3 +1,5 @@
+using System.Xml.Serialization;
+
 namespace TrxLib;
 
 /// <summary>
@@ -7,8 +9,10 @@ namespace TrxLib;
 public class TestList
 {
     /// <summary>Gets or sets the display name of the test list.</summary>
+    [XmlAttribute("name")]
     public string? Name { get; set; }
 
     /// <summary>Gets or sets the unique identifier of the test list.</summary>
+    [XmlAttribute("id")]
     public string? Id { get; set; }
 }

@@ -1,3 +1,5 @@
+using System.Xml.Serialization;
+
 namespace TrxLib;
 
 /// <summary>
@@ -7,11 +9,14 @@ namespace TrxLib;
 public class TestEntry
 {
     /// <summary>Gets or sets the test definition identifier.</summary>
+    [XmlAttribute("testId")]
     public string? TestId { get; set; }
 
     /// <summary>Gets or sets the execution identifier.</summary>
+    [XmlAttribute("executionId")]
     public string? ExecutionId { get; set; }
 
     /// <summary>Gets or sets the test list identifier.</summary>
+    [XmlAttribute("testListId")]
     public string? TestListId { get; set; }
 }

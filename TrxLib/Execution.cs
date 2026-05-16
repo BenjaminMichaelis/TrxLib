@@ -1,3 +1,5 @@
+using System.Xml.Serialization;
+
 namespace TrxLib;
 
 /// <summary>
@@ -10,5 +12,6 @@ public class Execution
     /// Gets or sets the execution identifier. Links this test definition to the
     /// corresponding UnitTestResult via its executionId attribute.
     /// </summary>
+    [XmlAttribute("id")]
     public string? Id { get; set; }
 }
