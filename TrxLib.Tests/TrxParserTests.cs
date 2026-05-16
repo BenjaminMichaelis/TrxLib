@@ -176,9 +176,9 @@ public class TrxParserTests
         test.Codebase?.FullName.Should().Be(@"/Users/josequ/dev/cli/test/Microsoft.DotNet.Cli.Utils.Tests/bin/Debug/netcoreapp1.0/Microsoft.DotNet.Cli.Utils.Tests.dll");
     }
 
-    // ── Failing tests (TDD) ─────────────────────────────────────────────────────
-    // These cover attributes/elements present in sample TRX files that TrxParser
-    // currently silently discards. Each test should be RED until the parser is fixed.
+    // ── Parser regression tests ──────────────────────────────────────────────────
+    // These cover attributes/elements present in sample TRX files that were
+    // previously silently discarded. All tests below should be GREEN.
 
     [Fact]
     public void Parse_OneTestFailureTrx_PopulatesTestRunId()
