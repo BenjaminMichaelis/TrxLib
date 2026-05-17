@@ -33,5 +33,41 @@ public enum TestOutcome
     /// <summary>
     /// The test is awaiting execution or further action.
     /// </summary>
-    Pending
+    Pending,
+
+    /// <summary>
+    /// The test run was aborted before the test completed. This is distinct from
+    /// <see cref="NotExecuted"/> (deliberately skipped) — the test was running but stopped.
+    /// </summary>
+    Aborted,
+
+    /// <summary>
+    /// The test agent was disconnected during execution.
+    /// </summary>
+    Disconnected,
+
+    /// <summary>
+    /// The test passed but produced warnings.
+    /// </summary>
+    Warning,
+
+    /// <summary>
+    /// An infrastructure error occurred during test execution (not a test assertion failure).
+    /// </summary>
+    Error,
+
+    /// <summary>
+    /// The test could not be run, typically due to incorrect configuration or missing dependencies.
+    /// </summary>
+    NotRunnable,
+
+    /// <summary>
+    /// The individual test passed, but the overall test run was aborted.
+    /// </summary>
+    PassedButRunAborted,
+
+    /// <summary>
+    /// The test was still in progress when results were collected.
+    /// </summary>
+    InProgress
 }

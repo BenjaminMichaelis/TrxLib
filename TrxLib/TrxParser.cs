@@ -49,6 +49,13 @@ public class TrxParser
                 "inconclusive" => TestOutcome.Inconclusive,
                 "timeout" => TestOutcome.Timeout,
                 "pending" => TestOutcome.Pending,
+                "aborted" => TestOutcome.Aborted,
+                "disconnected" => TestOutcome.Disconnected,
+                "warning" => TestOutcome.Warning,
+                "error" => TestOutcome.Error,
+                "notrunnable" => TestOutcome.NotRunnable,
+                "passedbutrunaborted" => TestOutcome.PassedButRunAborted,
+                "inprogress" => TestOutcome.InProgress,
                 _ => TestOutcome.NotExecuted
             };
 
@@ -112,13 +119,7 @@ public class TrxParser
             DirectoryInfo? testProjectDirectory = null;
             if (codebaseFile != null && codebaseFile.Directory != null)
             {
-                // Go up 3 levels to get the project directory (bin/Debug/netcoreappX.X/)
-                var dir = codebaseFile.Directory;
-                for (int i = 0; i < 3 && dir?.Parent != null; i++)
-                {
-                    dir = dir.Parent;
-                }
-                testProjectDirectory = dir;
+                testProjectDirectory = FindProjectDirectory(codebaseFile.Directory);
             }
 
             // Extract StdOut if available
@@ -173,6 +174,34 @@ public class TrxParser
         return testResultSet;
     }
 
+    private static readonly HashSet<string> KnownBuildOutputDirs = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "bin", "obj", "debug", "release", "publish", "x86", "x64", "arm", "arm64", "anycpu", "any cpu"
+    };
+
+    private static DirectoryInfo? FindProjectDirectory(DirectoryInfo dllDirectory)
+    {
+        var dir = dllDirectory;
+        while (dir.Parent != null)
+        {
+            if (!IsKnownBuildOutputDir(dir.Name))
+                return dir;
+            dir = dir.Parent;
+        }
+        return dllDirectory;
+    }
+
+    private static bool IsKnownBuildOutputDir(string name) =>
+        KnownBuildOutputDirs.Contains(name) || IsDotNetTfm(name);
+
+    // A .NET TFM directory name starts with "net" or "mono" and contains a digit
+    // (e.g. net10.0, netcoreapp3.1, net48, monoandroid10.0).
+    private static bool IsDotNetTfm(string name) =>
+        name.Length > 4 &&
+        (name.StartsWith("net", StringComparison.OrdinalIgnoreCase) ||
+         name.StartsWith("mono", StringComparison.OrdinalIgnoreCase)) &&
+        name.Any(char.IsDigit);
+
     private static TestRun? DeserializeTestRun(Stream stream)
     {
         XDocument doc;
@@ -189,6 +218,9 @@ public class TrxParser
         if (root == null)
             return null;
 
+        // Support TRX files that omit the xmlns declaration: fall back to no-namespace lookups.
+        var ns = root.Name.Namespace == XNamespace.None ? XNamespace.None : TrxNs;
+
         var testRun = new TestRun
         {
             Name = (string?)root.Attribute("name"),
@@ -196,7 +228,7 @@ public class TrxParser
             RunUser = (string?)root.Attribute("runUser"),
         };
 
-        var timesEl = root.Element(TrxNs + "Times");
+        var timesEl = root.Element(ns + "Times");
         if (timesEl != null)
         {
             testRun.Times = new Times
@@ -208,33 +240,33 @@ public class TrxParser
             };
         }
 
-        var testSettingsEl = root.Element(TrxNs + "TestSettings");
+        var testSettingsEl = root.Element(ns + "TestSettings");
         if (testSettingsEl != null)
         {
             testRun.TestSettings = new TestSettings
             {
                 Name = (string?)testSettingsEl.Attribute("name"),
                 Id = (string?)testSettingsEl.Attribute("id"),
-                Deployment = testSettingsEl.Element(TrxNs + "Deployment") is XElement deployEl
+                Deployment = testSettingsEl.Element(ns + "Deployment") is XElement deployEl
                     ? new Deployment { RunDeploymentRoot = (string?)deployEl.Attribute("runDeploymentRoot") }
                     : null,
             };
         }
 
-        var testDefsEl = root.Element(TrxNs + "TestDefinitions");
+        var testDefsEl = root.Element(ns + "TestDefinitions");
         if (testDefsEl != null)
         {
             testRun.TestDefinitions = new TestDefinitions
             {
-                UnitTests = testDefsEl.Elements(TrxNs + "UnitTest").Select(ut =>
+                UnitTests = testDefsEl.Elements(ns + "UnitTest").Select(ut =>
                 {
-                    var tmEl = ut.Element(TrxNs + "TestMethod");
+                    var tmEl = ut.Element(ns + "TestMethod");
                     return new UnitTest
                     {
                         Id = (string?)ut.Attribute("id"),
                         Name = (string?)ut.Attribute("name"),
                         Storage = (string?)ut.Attribute("storage"),
-                        Execution = ut.Element(TrxNs + "Execution") is XElement execEl
+                        Execution = ut.Element(ns + "Execution") is XElement execEl
                             ? new Execution { Id = (string?)execEl.Attribute("id") }
                             : null,
                         TestMethod = tmEl != null ? new TestMethod
@@ -249,28 +281,28 @@ public class TrxParser
             };
         }
 
-        var resultsEl = root.Element(TrxNs + "Results");
+        var resultsEl = root.Element(ns + "Results");
         if (resultsEl != null)
         {
             testRun.Results = new Results
             {
-                UnitTestResults = resultsEl.Elements(TrxNs + "UnitTestResult").Select(ur =>
+                UnitTestResults = resultsEl.Elements(ns + "UnitTestResult").Select(ur =>
                 {
                     Output? output = null;
-                    if (ur.Element(TrxNs + "Output") is XElement outputEl)
+                    if (ur.Element(ns + "Output") is XElement outputEl)
                     {
                         ErrorInfo? errorInfo = null;
-                        if (outputEl.Element(TrxNs + "ErrorInfo") is XElement errorInfoEl)
+                        if (outputEl.Element(ns + "ErrorInfo") is XElement errorInfoEl)
                         {
                             errorInfo = new ErrorInfo
                             {
-                                Message = (string?)errorInfoEl.Element(TrxNs + "Message"),
-                                StackTrace = (string?)errorInfoEl.Element(TrxNs + "StackTrace"),
+                                Message = (string?)errorInfoEl.Element(ns + "Message"),
+                                StackTrace = (string?)errorInfoEl.Element(ns + "StackTrace"),
                             };
                         }
                         output = new Output
                         {
-                            StdOut = (string?)outputEl.Element(TrxNs + "StdOut"),
+                            StdOut = (string?)outputEl.Element(ns + "StdOut"),
                             ErrorInfo = errorInfo,
                         };
                     }
@@ -293,11 +325,11 @@ public class TrxParser
             };
         }
 
-        var resultSummaryEl = root.Element(TrxNs + "ResultSummary");
+        var resultSummaryEl = root.Element(ns + "ResultSummary");
         if (resultSummaryEl != null)
         {
             Counters? counters = null;
-            if (resultSummaryEl.Element(TrxNs + "Counters") is XElement countersEl)
+            if (resultSummaryEl.Element(ns + "Counters") is XElement countersEl)
             {
                 counters = new Counters
                 {
@@ -320,11 +352,11 @@ public class TrxParser
                 };
             }
             Output? summaryOutput = null;
-            if (resultSummaryEl.Element(TrxNs + "Output") is XElement summaryOutputEl)
+            if (resultSummaryEl.Element(ns + "Output") is XElement summaryOutputEl)
             {
                 summaryOutput = new Output
                 {
-                    StdOut = (string?)summaryOutputEl.Element(TrxNs + "StdOut"),
+                    StdOut = (string?)summaryOutputEl.Element(ns + "StdOut"),
                 };
             }
             testRun.ResultSummary = new ResultSummary
@@ -335,12 +367,12 @@ public class TrxParser
             };
         }
 
-        var testListsEl = root.Element(TrxNs + "TestLists");
+        var testListsEl = root.Element(ns + "TestLists");
         if (testListsEl != null)
         {
             testRun.TestLists = new TestLists
             {
-                Items = testListsEl.Elements(TrxNs + "TestList").Select(tl => new TestList
+                Items = testListsEl.Elements(ns + "TestList").Select(tl => new TestList
                 {
                     Name = (string?)tl.Attribute("name"),
                     Id = (string?)tl.Attribute("id"),
@@ -348,12 +380,12 @@ public class TrxParser
             };
         }
 
-        var testEntriesEl = root.Element(TrxNs + "TestEntries");
+        var testEntriesEl = root.Element(ns + "TestEntries");
         if (testEntriesEl != null)
         {
             testRun.TestEntries = new TestEntries
             {
-                Items = testEntriesEl.Elements(TrxNs + "TestEntry").Select(te => new TestEntry
+                Items = testEntriesEl.Elements(ns + "TestEntry").Select(te => new TestEntry
                 {
                     TestId = (string?)te.Attribute("testId"),
                     ExecutionId = (string?)te.Attribute("executionId"),
