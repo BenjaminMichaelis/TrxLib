@@ -8,6 +8,7 @@
     <File Path="NuGet.config" />
     <File Path="README.md" />
   </Folder>
+  <Project Path="TrxLib.AotSample/TrxLib.AotSample.csproj" />
   <Project Path="TrxLib.Tests/TrxLib.Tests.csproj" />
   <Project Path="TrxLib/TrxLib.csproj" />
 </Solution>

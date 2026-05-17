@@ -1,5 +1,3 @@
-using System.Xml.Serialization;
-
 namespace TrxLib;
 
 /// <summary>
@@ -11,6 +9,5 @@ public class TestDefinitions
     /// <summary>
     /// Gets or sets the list of unit test definitions.
     /// </summary>
-    [XmlElement("UnitTest")]
     public List<UnitTest>? UnitTests { get; set; }
 }
