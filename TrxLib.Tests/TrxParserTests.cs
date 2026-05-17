@@ -347,14 +347,10 @@ public class TrxParserTests
     [Fact]
     public void Parse_PublishedCodeBaseTrx_TestProjectDirectoryIsProjectRoot()
     {
-        // The sample TRX uses Windows-style paths; skip on other platforms.
-        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            return;
-
         // publish\ is a single-level output directory; TestProjectDirectory should be its parent.
         var results = TrxParser.Parse(new FileInfo(GetSampleFilePath("published-codebase.trx")));
         results.Should().HaveCount(1);
-        results.Single().TestProjectDirectory?.FullName.Should().Be(@"C:\dev\acme-project",
+        results.Single().TestProjectDirectory?.Name.Should().Be("acme-project",
             "TestProjectDirectory should be the project root, not an arbitrary number of levels above the DLL");
     }
 

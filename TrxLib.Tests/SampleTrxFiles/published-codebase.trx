@@ -8,9 +8,9 @@
     <UnitTestResult executionId="a1b2c3d4-0000-0000-0001-000000000002" testId="a1b2c3d4-0000-0000-0002-000000000002" testName="Acme.Tests.SampleTests.Test_Passes" computerName="machine" duration="00:00:00.0010000" startTime="2026-01-01T00:00:00.5000000+00:00" endTime="2026-01-01T00:00:00.5010000+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a1b2c3d4-0000-0000-0001-000000000002" />
   </Results>
   <TestDefinitions>
-    <UnitTest name="Acme.Tests.SampleTests.Test_Passes" storage="c:\dev\acme-project\publish\acme.tests.dll" id="a1b2c3d4-0000-0000-0002-000000000002">
+    <UnitTest name="Acme.Tests.SampleTests.Test_Passes" storage="/home/user/acme-project/publish/acme.tests.dll" id="a1b2c3d4-0000-0000-0002-000000000002">
       <Execution id="a1b2c3d4-0000-0000-0001-000000000002" />
-      <TestMethod codeBase="C:\dev\acme-project\publish\Acme.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Acme.Tests.SampleTests" name="Test_Passes" />
+      <TestMethod codeBase="/home/user/acme-project/publish/Acme.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Acme.Tests.SampleTests" name="Test_Passes" />
     </UnitTest>
   </TestDefinitions>
   <TestEntries>
