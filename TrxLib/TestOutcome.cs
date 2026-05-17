@@ -40,7 +40,7 @@ public enum TestOutcome
     PassedButRunAborted,
 
     /// <summary>
-    /// Test had it chance for been executed but was not, as ITestElement.IsRunnable == false.
+    /// Test had a chance to execute but was not runnable.
     /// </summary>
     NotRunnable,
 
