@@ -14,4 +14,11 @@
     <ProjectReference Include="..\TrxLib\TrxLib.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="..\TrxLib.Tests\SampleTrxFiles\**\*.trx"
+             Link="SampleTrxFiles\%(RecursiveDir)%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest"
+             CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
