@@ -57,6 +57,9 @@ public class TrxParser
                 "passedbutrunaborted" => TestOutcome.PassedButRunAborted,
                 "inprogress" => TestOutcome.InProgress,
                 "completed" => TestOutcome.Completed,
+                // A null/absent outcome attribute means Error in vstest's serialization:
+                // TestOutcome.Error is ordinal 0 (the enum default), so XmlPersistence
+                // omits the attribute when outcome == Error.
                 null => TestOutcome.Error,
                 _ => TestOutcome.NotExecuted
             };
