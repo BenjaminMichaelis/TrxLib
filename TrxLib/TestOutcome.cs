@@ -2,8 +2,10 @@ namespace TrxLib;
 
 /// <summary>
 /// Represents the possible outcomes of a test execution.
-/// Checked against https://github.com/microsoft/vstest/blob/ba0077af37594366d76e0b8455143b982de3d416/src/Microsoft.TestPlatform.Extensions.TrxLogger/ObjectModel/TestOutcome.cs
 /// </summary>
+/// <remarks>
+/// Checked against <see href="https://github.com/microsoft/vstest/blob/ba0077af37594366d76e0b8455143b982de3d416/src/Microsoft.TestPlatform.Extensions.TrxLogger/ObjectModel/TestOutcome.cs">Microsoft.TestPlatform.Extensions.TrxLogger/ObjectModel/TestOutcome.cs</see>.
+/// </remarks>
 public enum TestOutcome
 {
     /// <summary>
