@@ -5,10 +5,10 @@ namespace TrxLib.Tests;
 
 public class TestResultTests
 {
-    [Theory]
-    [InlineData("namespace.class.test", "namespace")]
-    [InlineData("deeper.namespace.class.test", "deeper.namespace")]
-    [InlineData("still.deeper.namespace.class.test", "still.deeper.namespace")]
+    [Test]
+    [Arguments("namespace.class.test", "namespace")]
+    [Arguments("deeper.namespace.class.test", "deeper.namespace")]
+    [Arguments("still.deeper.namespace.class.test", "still.deeper.namespace")]
     public void Namespace_is_parsed_correctly(
         string fullyQualifiedTestName,
         string expectedNamespace)
@@ -17,10 +17,10 @@ public class TestResultTests
         testResult.Namespace.Should().Be(expectedNamespace);
     }
 
-    [Theory]
-    [InlineData("namespace.class.test")]
-    [InlineData("deeper.namespace.class.test")]
-    [InlineData("still.deeper.namespace.class.test")]
+    [Test]
+    [Arguments("namespace.class.test")]
+    [Arguments("deeper.namespace.class.test")]
+    [Arguments("still.deeper.namespace.class.test")]
     public void TestName_is_parsed_correctly(
         string fullyQualifiedTestName)
     {
@@ -28,10 +28,10 @@ public class TestResultTests
         testResult.TestName.Should().Be("test");
     }
 
-    [Theory]
-    [InlineData("namespace.class.test")]
-    [InlineData("deeper.namespace.class.test")]
-    [InlineData("still.deeper.namespace.class.test")]
+    [Test]
+    [Arguments("namespace.class.test")]
+    [Arguments("deeper.namespace.class.test")]
+    [Arguments("still.deeper.namespace.class.test")]
     public void ClassName_is_parsed_correctly(
         string fullyQualifiedTestName)
     {
@@ -39,11 +39,11 @@ public class TestResultTests
         testResult.ClassName.Should().Be("class");
     }
 
-    [Theory]
-    [InlineData("namespace.class.test", "namespace.class")]
-    [InlineData("deeper.namespace.class.test", "deeper.namespace.class")]
-    [InlineData("still.deeper.namespace.class.test", "still.deeper.namespace.class")]
-    [InlineData("deeper.namespace.class.theorytest(command: \"build\")", "deeper.namespace.class")]
+    [Test]
+    [Arguments("namespace.class.test", "namespace.class")]
+    [Arguments("deeper.namespace.class.test", "deeper.namespace.class")]
+    [Arguments("still.deeper.namespace.class.test", "still.deeper.namespace.class")]
+    [Arguments("deeper.namespace.class.theorytest(command: \"build\")", "deeper.namespace.class")]
     public void FullyQualifiedClassName_is_parsed_correctly(
         string fullyQualifiedTestName,
         string expected)
@@ -52,7 +52,7 @@ public class TestResultTests
         testResult.FullyQualifiedClassName.Should().Be(expected);
     }
 
-    [Fact]
+    [Test]
     public void Theory_test_is_parsed_correctly()
     {
         var testResult = new TestResult(
@@ -65,9 +65,9 @@ public class TestResultTests
         testResult.ClassName.Should().Be("GivenDotnetInvokesMSBuild");
     }
 
-    [Theory]
-    [InlineData("Cell 1: #r \"nuget:TRexLib\"")]
-    [InlineData("Cell 1: Console.Write(\"Hello world.\";")]
+    [Test]
+    [Arguments("Cell 1: #r \"nuget:TRexLib\"")]
+    [Arguments("Cell 1: Console.Write(\"Hello world.\";")]
     public void Inferred_properties_are_not_inferred_from_fully_qualified_test_name_if_they_do_not_match_dotnet_standards(
         string fullyQualifiedTestName)
     {
@@ -78,7 +78,7 @@ public class TestResultTests
         testResult.TestName.Should().Be(fullyQualifiedTestName);
     }
 
-    [Fact]
+    [Test]
     public void Theory_test_with_dotted_param_is_parsed_correctly_when_testMethod_provided()
     {
         // When testMethod is supplied the constructor must use testMethod.ClassName
@@ -99,7 +99,7 @@ public class TestResultTests
         testResult.TestName.Should().Be($"{methodName}(param: \"foo.bar\")");
     }
 
-    [Fact]
+    [Test]
     public void ToString_DoesNotThrow_ForOutcomeValueNotInEnum()
     {
         // TestResult.ToString() has a _ => throw arm that crashes on any enum value
