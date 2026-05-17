@@ -182,14 +182,8 @@ public class TrxParser
         return testResultSet;
     }
 
-    private static readonly HashSet<string> KnownBuildOutputDirs = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "bin", "obj", "debug", "release", "publish", "x86", "x64", "arm", "arm64", "anycpu", "any cpu"
-    };
-
     private static DirectoryInfo? FindProjectDirectory(DirectoryInfo dllDirectory)
     {
-        // Prefer anchoring on the nearest "bin" folder for standard .NET SDK layouts.
         var dir = dllDirectory;
         while (dir.Parent is not null)
         {
@@ -197,28 +191,8 @@ public class TrxParser
                 return dir.Parent;
             dir = dir.Parent;
         }
-
-        // Fallback for layouts that do not include "bin" (e.g. published artifact paths).
-        dir = dllDirectory;
-        while (dir.Parent is not null)
-        {
-            if (!IsKnownBuildOutputDir(dir.Name))
-                return dir;
-            dir = dir.Parent;
-        }
         return dir;
     }
-
-    private static bool IsKnownBuildOutputDir(string name) =>
-        KnownBuildOutputDirs.Contains(name) || IsDotNetTfm(name);
-
-    // A .NET TFM directory name starts with "net" or "mono" and contains a digit
-    // (e.g. net10.0, netcoreapp3.1, net48, monoandroid10.0).
-    private static bool IsDotNetTfm(string name) =>
-        name.Length > 4 &&
-        (name.StartsWith("net", StringComparison.OrdinalIgnoreCase) ||
-         name.StartsWith("mono", StringComparison.OrdinalIgnoreCase)) &&
-        name.Any(char.IsDigit);
 
 
     private static TestRun? DeserializeTestRun(Stream stream)
