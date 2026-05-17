@@ -1,5 +1,3 @@
-using System.Xml.Serialization;
-
 namespace TrxLib;
 
 /// <summary>
@@ -11,6 +9,5 @@ public class Results
     /// <summary>
     /// Gets or sets the list of unit test results from the test run.
     /// </summary>
-    [XmlElement("UnitTestResult")]
     public List<UnitTestResult>? UnitTestResults { get; set; }
 }
