@@ -1,3 +1,8 @@
+---
+name: test-writing
+description: Use this skill when writing tests.
+---
+
 # TRX fixture policy for tests
 
 When adding or updating sample `.trx` files in this repository, use **real captured TRX output**, not synthetic hand-written fixtures.
