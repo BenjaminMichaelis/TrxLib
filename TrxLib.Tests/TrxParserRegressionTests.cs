@@ -1,3 +1,5 @@
+using System.IO;
+
 using AwesomeAssertions;
 
 namespace TrxLib.Tests;
@@ -10,11 +12,11 @@ public class TrxParserRegressionTests
     // All vstest outcome strings must round-trip correctly through the parser.
     // A null/missing outcome attribute maps to Error: TestOutcome.Error is ordinal 0
     // (the enum default), so vstest omits the attribute rather than writing "Error".
-    [Theory]
-    [InlineData("Error",       TestOutcome.Error)]
-    [InlineData("Aborted",     TestOutcome.Aborted)]
-    [InlineData("NotRunnable", TestOutcome.NotRunnable)]
-    [InlineData(null,          TestOutcome.Error)] // absent attribute = Error
+    [Test]
+    [Arguments("Error",       TestOutcome.Error)]
+    [Arguments("Aborted",     TestOutcome.Aborted)]
+    [Arguments("NotRunnable", TestOutcome.NotRunnable)]
+    [Arguments(null,          TestOutcome.Error)] // absent attribute = Error
     public void Parse_OutcomeAttribute_RoundTrips(string? outcomeAttr, TestOutcome expected)
     {
         using var trxFile = new TempTrxFile(MinimalTrx(outcome: outcomeAttr));
@@ -24,14 +26,14 @@ public class TrxParserRegressionTests
 
     // TestProjectDirectory must resolve to the project root for all standard .NET SDK
     // output layouts, including RID-qualified and publish subdirectories nested under bin/.
-    public static TheoryData<string, string[]> DirectoryLayouts => new()
-    {
-        { "fake_project_rid",         ["bin", "Debug",   "net8.0",                            "win-x64", "MyProject.dll"] },
-        { "fake_project_publish",     ["bin", "Release", "net8.0",              "publish",               "MyProject.dll"] },
-        { "fake_project_rid_publish", ["bin", "Release", "net8.0", "linux-x64", "publish",               "MyProject.dll"] },
-    };
+    public static IEnumerable<(string, string[])> DirectoryLayouts =>
+    [
+        ("fake_project_rid",         ["bin", "Debug",   "net8.0",                            "win-x64", "MyProject.dll"]),
+        ("fake_project_publish",     ["bin", "Release", "net8.0",              "publish",               "MyProject.dll"]),
+        ("fake_project_rid_publish", ["bin", "Release", "net8.0", "linux-x64", "publish",               "MyProject.dll"]),
+    ];
 
-    [Theory, MemberData(nameof(DirectoryLayouts))]
+    [Test, MethodDataSource(nameof(DirectoryLayouts))]
     public void Parse_TestProjectDirectory_ResolvesFromBinAnchor(string subfolder, string[] segments)
     {
         var projectRoot = Path.GetFullPath(Path.Combine(Path.GetTempPath(), subfolder));

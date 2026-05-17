@@ -37,6 +37,7 @@ jobs:
       contents: read
     
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
 
@@ -56,7 +57,7 @@ jobs:
         run: dotnet build -p:ContinuousIntegrationBuild=True --no-restore --configuration Release
   
       - name: Test
-        run: dotnet test --no-build --configuration Release --verbosity normal
+        run: dotnet test --no-build --configuration Release --verbosity normal --coverage --coverage-output-format cobertura
 
       - name: AOT Publish Validation
         run: |
