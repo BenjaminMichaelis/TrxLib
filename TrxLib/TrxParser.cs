@@ -189,7 +189,7 @@ public class TrxParser
                 return dir;
             dir = dir.Parent;
         }
-        return dllDirectory;
+        return dir;
     }
 
     private static bool IsKnownBuildOutputDir(string name) =>
@@ -220,8 +220,7 @@ public class TrxParser
         if (root == null)
             return null;
 
-        // Support TRX files that omit the xmlns declaration: fall back to no-namespace lookups.
-        var ns = root.Name.Namespace == XNamespace.None ? XNamespace.None : TrxNs;
+        var ns = root.Name.Namespace;
 
 
         var testRun = new TestRun

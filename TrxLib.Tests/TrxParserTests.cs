@@ -332,8 +332,7 @@ public class TrxParserTests
     {
         var results = TrxParser.Parse(new FileInfo(GetSampleFilePath("aborted-outcome.trx")));
         results.Should().HaveCount(1);
-        results.Single().Outcome.Should().NotBe(TestOutcome.NotExecuted,
-            "\"Aborted\" is a distinct vstest outcome and must not be silently mapped to NotExecuted");
+        results.Single().Outcome.Should().Be(TestOutcome.Aborted);
     }
 
     [Fact]
