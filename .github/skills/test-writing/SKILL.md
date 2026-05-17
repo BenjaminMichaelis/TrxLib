@@ -1,5 +1,5 @@
 ---
-name: writing-test
+name: test-writing
 description: Use this skill when writing tests.
 ---
 
