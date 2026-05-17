@@ -56,6 +56,7 @@ public class TrxParser
                 "notrunnable" => TestOutcome.NotRunnable,
                 "passedbutrunaborted" => TestOutcome.PassedButRunAborted,
                 "inprogress" => TestOutcome.InProgress,
+                "completed" => TestOutcome.Completed,
                 _ => TestOutcome.NotExecuted
             };
 
@@ -202,6 +203,7 @@ public class TrxParser
          name.StartsWith("mono", StringComparison.OrdinalIgnoreCase)) &&
         name.Any(char.IsDigit);
 
+
     private static TestRun? DeserializeTestRun(Stream stream)
     {
         XDocument doc;
@@ -220,6 +222,7 @@ public class TrxParser
 
         // Support TRX files that omit the xmlns declaration: fall back to no-namespace lookups.
         var ns = root.Name.Namespace == XNamespace.None ? XNamespace.None : TrxNs;
+
 
         var testRun = new TestRun
         {

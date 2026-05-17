@@ -3,71 +3,83 @@ namespace TrxLib;
 /// <summary>
 /// Represents the possible outcomes of a test execution.
 /// </summary>
+/// <remarks>
+/// Checked against <see href="https://github.com/microsoft/vstest/blob/ba0077af37594366d76e0b8455143b982de3d416/src/Microsoft.TestPlatform.Extensions.TrxLogger/ObjectModel/TestOutcome.cs">Microsoft.TestPlatform.Extensions.TrxLogger/ObjectModel/TestOutcome.cs</see>.
+/// </remarks>
 public enum TestOutcome
 {
     /// <summary>
-    /// The test was executed successfully and all assertions passed.
-    /// </summary>
-    Passed,
-    
-    /// <summary>
-    /// The test was executed but failed one or more assertions or threw an exception.
-    /// </summary>
-    Failed,
-    
-    /// <summary>
-    /// The test was not executed, typically due to being skipped or ignored.
-    /// </summary>
-    NotExecuted,
-    
-    /// <summary>
-    /// The test execution completed but the result was inconclusive.
-    /// </summary>
-    Inconclusive,
-    
-    /// <summary>
-    /// The test execution exceeded the allowed time limit.
-    /// </summary>
-    Timeout,
-    
-    /// <summary>
-    /// The test is awaiting execution or further action.
-    /// </summary>
-    Pending,
-
-    /// <summary>
-    /// The test run was aborted before the test completed. This is distinct from
-    /// <see cref="NotExecuted"/> (deliberately skipped) — the test was running but stopped.
-    /// </summary>
-    Aborted,
-
-    /// <summary>
-    /// The test agent was disconnected during execution.
-    /// </summary>
-    Disconnected,
-
-    /// <summary>
-    /// The test passed but produced warnings.
-    /// </summary>
-    Warning,
-
-    /// <summary>
-    /// An infrastructure error occurred during test execution (not a test assertion failure).
+    /// There was a system error while we were trying to execute a test.
     /// </summary>
     Error,
 
     /// <summary>
-    /// The test could not be run, typically due to incorrect configuration or missing dependencies.
+    /// Test was executed, but there were issues.
+    /// Issues may involve exceptions or failed assertions.
     /// </summary>
-    NotRunnable,
+    Failed,
 
     /// <summary>
-    /// The individual test passed, but the overall test run was aborted.
+    /// The test timed out.
+    /// </summary>
+    Timeout,
+
+    /// <summary>
+    /// Test was aborted.
+    /// This was not caused by a user gesture, but rather by a framework decision.
+    /// </summary>
+    Aborted,
+
+    /// <summary>
+    /// Test has completed, but we can't say if it passed or failed.
+    /// May be used for aborted tests...
+    /// </summary>
+    Inconclusive,
+
+    /// <summary>
+    /// Test was executed w/o any issues, but run was aborted.
     /// </summary>
     PassedButRunAborted,
 
     /// <summary>
-    /// The test was still in progress when results were collected.
+    /// Test had a chance to execute but was not runnable.
     /// </summary>
-    InProgress
+    NotRunnable,
+
+    /// <summary>
+    /// Test was not executed.
+    /// This was caused by a user gesture - e.g. user hit stop button.
+    /// </summary>
+    NotExecuted,
+
+    /// <summary>
+    /// Test run was disconnected before it finished running.
+    /// </summary>
+    Disconnected,
+
+    /// <summary>
+    /// To be used by Run level results.
+    /// This is not a failure.
+    /// </summary>
+    Warning,
+
+    /// <summary>
+    /// Test was executed w/o any issues.
+    /// </summary>
+    Passed,
+
+    /// <summary>
+    /// Test has completed, but there is no qualitative measure of completeness.
+    /// </summary>
+    Completed,
+
+    /// <summary>
+    /// Test is currently executing.
+    /// </summary>
+    InProgress,
+
+    /// <summary>
+    /// Test is in the execution queue, was not started yet.
+    /// </summary>
+    Pending,
 }
