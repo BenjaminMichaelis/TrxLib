@@ -17,7 +17,6 @@
   This would typically list all NuGet packages used within this solution.
   -->
   <ItemGroup>
-    <PackageVersion Include="AwesomeAssertions" Version="9.4.0" />
     <PackageVersion Include="IntelliTect.Multitool" Version="2.0.0" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.203" />
     <PackageVersion Include="Moq" Version="4.20.70" />

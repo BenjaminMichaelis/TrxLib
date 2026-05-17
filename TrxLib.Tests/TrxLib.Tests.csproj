@@ -10,7 +10,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AwesomeAssertions" />
     <PackageReference Include="IntelliTect.Multitool" />
     <PackageReference Include="TUnit" />
   </ItemGroup>
