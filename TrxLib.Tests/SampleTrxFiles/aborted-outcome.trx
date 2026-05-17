@@ -1,26 +1,55 @@
-<?xml version="1.0" encoding="utf-8"?>
-<TestRun id="a1b2c3d4-0000-0000-0000-000000000001" name="user@machine 2026-01-01 00:00:00" runUser="user" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
-  <Times creation="2026-01-01T00:00:00.0000000+00:00" queuing="2026-01-01T00:00:00.0000001+00:00" start="2026-01-01T00:00:00.0000002+00:00" finish="2026-01-01T00:00:01.0000000+00:00" />
-  <TestSettings name="default" id="a1b2c3d4-0000-0000-0000-000000000002">
-    <Deployment runDeploymentRoot="user_machine_2026-01-01_00_00_00" />
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="6ee07f75-fb7c-472a-826e-76d151e1c033" name="sample@MACHINE 2026-05-17 00:09:42" runUser="MACHINE\sample" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-05-17T00:09:42.6672639-07:00" queuing="2026-05-17T00:09:42.6672644-07:00" start="2026-05-17T00:09:40.1879713-07:00" finish="2026-05-17T00:09:48.5593250-07:00" />
+  <TestSettings name="default" id="d5a33f7a-7488-410e-8195-3807f855af12">
+    <Deployment runDeploymentRoot="sample_MACHINE_2026-05-17_00_09_42" />
   </TestSettings>
   <Results>
-    <UnitTestResult executionId="a1b2c3d4-0000-0000-0001-000000000001" testId="a1b2c3d4-0000-0000-0002-000000000001" testName="Acme.Tests.SampleTests.Test_That_Was_Aborted" computerName="machine" duration="00:00:00.0010000" startTime="2026-01-01T00:00:00.5000000+00:00" endTime="2026-01-01T00:00:00.5010000+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Aborted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a1b2c3d4-0000-0000-0001-000000000001" />
+    <UnitTestResult executionId="2c44a0e5-0c78-4d78-9665-aa45a6d98f3f" testId="8a01445b-23e6-f125-1b18-0fa67670c70d" testName="TrxAbortGen.UnitTest1.FastTest" computerName="MACHINE" duration="00:00:00.0054353" startTime="2026-05-17T00:09:41.3979349-07:00" endTime="2026-05-17T00:09:41.3999615-07:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2c44a0e5-0c78-4d78-9665-aa45a6d98f3f" />
   </Results>
   <TestDefinitions>
-    <UnitTest name="Acme.Tests.SampleTests.Test_That_Was_Aborted" storage="c:\acme\tests\bin\debug\net10.0\acme.tests.dll" id="a1b2c3d4-0000-0000-0002-000000000001">
-      <Execution id="a1b2c3d4-0000-0000-0001-000000000001" />
-      <TestMethod codeBase="C:\acme\tests\bin\debug\net10.0\acme.tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Acme.Tests.SampleTests" name="Test_That_Was_Aborted" />
+    <UnitTest name="TrxAbortGen.UnitTest1.FastTest" storage="d:\sample\trxabortgen\bin\debug\net10.0\trxabortgen.dll" id="8a01445b-23e6-f125-1b18-0fa67670c70d">
+      <Execution id="2c44a0e5-0c78-4d78-9665-aa45a6d98f3f" />
+      <TestMethod codeBase="D:\sample\TrxAbortGen\bin\Debug\net10.0\TrxAbortGen.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="TrxAbortGen.UnitTest1" name="FastTest" />
     </UnitTest>
   </TestDefinitions>
   <TestEntries>
-    <TestEntry testId="a1b2c3d4-0000-0000-0002-000000000001" executionId="a1b2c3d4-0000-0000-0001-000000000001" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8a01445b-23e6-f125-1b18-0fa67670c70d" executionId="2c44a0e5-0c78-4d78-9665-aa45a6d98f3f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
   </TestEntries>
   <TestLists>
     <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
     <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
   </TestLists>
-  <ResultSummary outcome="Aborted">
-    <Counters total="1" executed="1" passed="0" failed="0" error="0" timeout="0" aborted="1" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+  <ResultSummary outcome="Failed">
+    <Counters total="1" executed="1" passed="1" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.8)&#xD;
+[xUnit.net 00:00:00.08]   Discovering: TrxAbortGen&#xD;
+[xUnit.net 00:00:00.12]   Discovered:  TrxAbortGen&#xD;
+[xUnit.net 00:00:00.14]   Starting:    TrxAbortGen&#xD;
+[createdump] Writing full dump for process 120264 to file C:\Temp\sample\testhost_120264_20260517T000946_hangdump.dmp&#xD;
+[createdump] Dump successfully written in 1772ms&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="MACHINE" outcome="Error" timestamp="2026-05-17T00:09:48.4883900-07:00">
+        <Text>The active test run was aborted. Reason: Test host process crashed</Text>
+      </RunInfo>
+      <RunInfo computerName="MACHINE" outcome="Warning" timestamp="2026-05-17T00:09:48.5003562-07:00">
+        <Text>Data collector 'Blame' message: The specified inactivity time of 5 seconds has elapsed. Collecting hang dumps from testhost and its child processes.</Text>
+      </RunInfo>
+    </RunInfos>
+    <CollectorDataEntries>
+      <Collector agentName="MACHINE" uri="datacollector://microsoft/TestPlatform/Extensions/Blame/v1" collectorDisplayName="Blame">
+        <UriAttachments>
+          <UriAttachment>
+            <A href="MACHINE\testhost_120264_20260517T000946_hangdump.dmp"></A>
+          </UriAttachment>
+          <UriAttachment>
+            <A href="MACHINE\Sequence_e25cc2d916314e8d81015e2757d19f02.xml"></A>
+          </UriAttachment>
+        </UriAttachments>
+      </Collector>
+    </CollectorDataEntries>
   </ResultSummary>
 </TestRun>

@@ -328,11 +328,12 @@ public class TrxParserTests
     // ── Regression tests ─────────────────────────────────────────────────────────
 
     [Fact]
-    public void Parse_AbortedOutcomeTrx_AbortedIsNotSilentlyMappedToNotExecuted()
+    public void Parse_AbortedRunTrx_ParsesRealAbortedRunFixture()
     {
         var results = TrxParser.Parse(new FileInfo(GetSampleFilePath("aborted-outcome.trx")));
         results.Should().HaveCount(1);
-        results.Single().Outcome.Should().Be(TestOutcome.Aborted);
+        results.Single().Outcome.Should().Be(TestOutcome.Passed);
+        results.OriginalTestRun?.ResultSummary?.Outcome.Should().Be("Failed");
     }
 
     [Fact]
