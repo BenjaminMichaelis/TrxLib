@@ -33,6 +33,8 @@ jobs:
             use-github-auto-merge: true
   build-and-test:
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
     
     strategy:
       matrix:
