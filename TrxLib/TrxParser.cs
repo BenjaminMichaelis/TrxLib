@@ -43,13 +43,25 @@ public class TrxParser
 
             var outcome = result.Outcome?.ToLowerInvariant() switch
             {
-                "passed" => TestOutcome.Passed,
-                "failed" => TestOutcome.Failed,
-                "notexecuted" => TestOutcome.NotExecuted,
-                "inconclusive" => TestOutcome.Inconclusive,
-                "timeout" => TestOutcome.Timeout,
-                "pending" => TestOutcome.Pending,
-                _ => TestOutcome.NotExecuted
+                "passed"               => TestOutcome.Passed,
+                "failed"               => TestOutcome.Failed,
+                "notexecuted"          => TestOutcome.NotExecuted,
+                "inconclusive"         => TestOutcome.Inconclusive,
+                "timeout"              => TestOutcome.Timeout,
+                "pending"              => TestOutcome.Pending,
+                "error"                => TestOutcome.Error,
+                "aborted"              => TestOutcome.Aborted,
+                "notrunnable"          => TestOutcome.NotRunnable,
+                "disconnected"         => TestOutcome.Disconnected,
+                "warning"              => TestOutcome.Warning,
+                "completed"            => TestOutcome.Completed,
+                "inprogress"           => TestOutcome.InProgress,
+                "passedbutrunaborted"  => TestOutcome.PassedButRunAborted,
+                // A null/absent outcome attribute means Error in vstest's serialization:
+                // TestOutcome.Error is ordinal 0 (the enum default), so XmlPersistence
+                // omits the attribute when outcome == Error.
+                null                   => TestOutcome.Error,
+                _                      => TestOutcome.NotExecuted
             };
 
             DateTimeOffset? resultStartTime = null, resultEndTime = null;
@@ -108,17 +120,25 @@ public class TrxParser
                 codebaseFile = new FileInfo(testMethodDomain.CodeBase);
             }
 
-            // Calculate test project directory from codebase if available
+            // Calculate test project directory from codebase if available.
+            // Walk up to the 'bin' folder, then take its parent — this handles
+            // all standard .NET SDK output layouts:
+            //   bin/{config}/{tfm}/                 (depth 3 — classic)
+            //   bin/{config}/{tfm}/{rid}/            (depth 4 — self-contained)
+            //   bin/{config}/{tfm}/publish/          (depth 4 — publish output)
+            //   bin/{config}/{tfm}/{rid}/publish/    (depth 5 — self-contained publish)
             DirectoryInfo? testProjectDirectory = null;
-            if (codebaseFile != null && codebaseFile.Directory != null)
+            if (codebaseFile?.Directory != null)
             {
-                // Go up 3 levels to get the project directory (bin/Debug/netcoreappX.X/)
                 var dir = codebaseFile.Directory;
-                for (int i = 0; i < 3 && dir?.Parent != null; i++)
+                while (dir?.Parent != null && !string.Equals(dir.Name, "bin", StringComparison.OrdinalIgnoreCase))
                 {
                     dir = dir.Parent;
                 }
-                testProjectDirectory = dir;
+                // dir is now the 'bin' folder (or root if no 'bin' found); its parent is the project root.
+                testProjectDirectory = string.Equals(dir?.Name, "bin", StringComparison.OrdinalIgnoreCase)
+                    ? dir!.Parent
+                    : dir;
             }
 
             // Extract StdOut if available
