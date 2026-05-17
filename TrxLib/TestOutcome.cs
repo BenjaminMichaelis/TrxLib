@@ -3,78 +3,83 @@ namespace TrxLib;
 /// <summary>
 /// Represents the possible outcomes of a test execution.
 /// </summary>
+/// <remarks>
+/// Checked against <see href="https://github.com/microsoft/vstest/blob/ba0077af37594366d76e0b8455143b982de3d416/src/Microsoft.TestPlatform.Extensions.TrxLogger/ObjectModel/TestOutcome.cs">Microsoft.TestPlatform.Extensions.TrxLogger/ObjectModel/TestOutcome.cs</see>.
+/// </remarks>
 public enum TestOutcome
 {
     /// <summary>
-    /// The test was executed successfully and all assertions passed.
-    /// </summary>
-    Passed,
-    
-    /// <summary>
-    /// The test was executed but failed one or more assertions or threw an exception.
-    /// </summary>
-    Failed,
-    
-    /// <summary>
-    /// The test was not executed, typically due to being skipped or ignored.
-    /// </summary>
-    NotExecuted,
-    
-    /// <summary>
-    /// The test execution completed but the result was inconclusive.
-    /// </summary>
-    Inconclusive,
-    
-    /// <summary>
-    /// The test execution exceeded the allowed time limit.
-    /// </summary>
-    Timeout,
-    
-    /// <summary>
-    /// The test is awaiting execution or further action.
-    /// </summary>
-    Pending,
-
-    /// <summary>
-    /// A system error occurred during test execution (e.g., failure to copy result attachments).
-    /// In TRX files written by vstest, this outcome is represented by the absence of the
-    /// <c>outcome</c> attribute on <c>&lt;UnitTestResult&gt;</c> (Error is the enum default).
+    /// There was a system error while we were trying to execute a test.
     /// </summary>
     Error,
 
     /// <summary>
-    /// The test was aborted by the framework (not by a user gesture).
+    /// Test was executed, but there were issues.
+    /// Issues may involve exceptions or failed assertions.
+    /// </summary>
+    Failed,
+
+    /// <summary>
+    /// The test timed out.
+    /// </summary>
+    Timeout,
+
+    /// <summary>
+    /// Test was aborted.
+    /// This was not caused by a user gesture, but rather by a framework decision.
     /// </summary>
     Aborted,
 
     /// <summary>
-    /// The test could not be run because <c>ITestElement.IsRunnable</c> is <c>false</c>.
+    /// Test has completed, but we can't say if it passed or failed.
+    /// May be used for aborted tests...
+    /// </summary>
+    Inconclusive,
+
+    /// <summary>
+    /// Test was executed w/o any issues, but run was aborted.
+    /// </summary>
+    PassedButRunAborted,
+
+    /// <summary>
+    /// Test had a chance to execute but was not runnable.
     /// </summary>
     NotRunnable,
 
     /// <summary>
-    /// The test run was disconnected before it finished.
+    /// Test was not executed.
+    /// This was caused by a user gesture - e.g. user hit stop button.
+    /// </summary>
+    NotExecuted,
+
+    /// <summary>
+    /// Test run was disconnected before it finished running.
     /// </summary>
     Disconnected,
 
     /// <summary>
-    /// The test produced a warning-level result. Typically a run-level outcome.
+    /// To be used by Run level results.
+    /// This is not a failure.
     /// </summary>
     Warning,
 
     /// <summary>
-    /// The test completed but no qualitative measure of completeness was established.
-    /// Typically a run-level outcome.
+    /// Test was executed w/o any issues.
+    /// </summary>
+    Passed,
+
+    /// <summary>
+    /// Test has completed, but there is no qualitative measure of completeness.
     /// </summary>
     Completed,
 
     /// <summary>
-    /// The test is currently in progress.
+    /// Test is currently executing.
     /// </summary>
     InProgress,
 
     /// <summary>
-    /// The test passed but the run was aborted before all tests completed.
+    /// Test is in the execution queue, was not started yet.
     /// </summary>
-    PassedButRunAborted,
+    Pending,
 }
