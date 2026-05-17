@@ -325,6 +325,27 @@ public class TrxParserTests
         results.Count.Should().Be(recombinedCount);
     }
 
+    // ── Regression tests ─────────────────────────────────────────────────────────
+
+    [Fact]
+    public void Parse_AbortedRunTrx_ParsesRealAbortedRunFixture()
+    {
+        var results = TrxParser.Parse(new FileInfo(GetSampleFilePath("aborted-outcome.trx")));
+        results.Should().HaveCount(1);
+        results.Single().Outcome.Should().Be(TestOutcome.Passed);
+        results.OriginalTestRun?.ResultSummary?.Outcome.Should().Be("Failed");
+    }
+
+    // Real NUnit TRX captured without xmlns on the root element, sourced from:
+    // https://github.com/joaoopereira/dotnet-test-rerun/blob/main/test/dotnet-test-rerun.UnitTests/Fixtures/RerunCommand/NUnitTrxFileWithOneFailedTest.trx
+    [Fact]
+    public void Parse_NoNamespaceTrx_ParsesResultsWithoutNamespace()
+    {
+        var results = TrxParser.Parse(new FileInfo(GetSampleFilePath("no-namespace.trx")));
+        results.Should().HaveCount(5,
+            "the parser must fall back to namespace-agnostic element matching when xmlns is absent");
+    }
+
     [Fact]
     public void Parse_ComplexTrx_ParsesTestRunNameCorrectly()
     {

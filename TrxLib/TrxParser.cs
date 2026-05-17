@@ -57,9 +57,6 @@ public class TrxParser
                 "completed"            => TestOutcome.Completed,
                 "inprogress"           => TestOutcome.InProgress,
                 "passedbutrunaborted"  => TestOutcome.PassedButRunAborted,
-                // A null/absent outcome attribute means Error in vstest's serialization:
-                // TestOutcome.Error is ordinal 0 (the enum default), so XmlPersistence
-                // omits the attribute when outcome == Error.
                 null                   => TestOutcome.Error,
                 _                      => TestOutcome.NotExecuted
             };
@@ -130,14 +127,7 @@ public class TrxParser
             DirectoryInfo? testProjectDirectory = null;
             if (codebaseFile?.Directory is { } dir)
             {
-                while (dir.Parent is not null && !string.Equals(dir.Name, "bin", StringComparison.OrdinalIgnoreCase))
-                {
-                    dir = dir.Parent;
-                }
-                // Return the parent of the 'bin' folder (the project root).
-                // If no 'bin' folder was found, leave testProjectDirectory as null.
-                if (string.Equals(dir.Name, "bin", StringComparison.OrdinalIgnoreCase))
-                    testProjectDirectory = dir.Parent;
+                testProjectDirectory = FindProjectDirectory(codebaseFile.Directory);
             }
 
             // Extract StdOut if available
@@ -192,6 +182,19 @@ public class TrxParser
         return testResultSet;
     }
 
+    private static DirectoryInfo? FindProjectDirectory(DirectoryInfo dllDirectory)
+    {
+        var dir = dllDirectory;
+        while (dir.Parent is not null)
+        {
+            if (string.Equals(dir.Name, "bin", StringComparison.OrdinalIgnoreCase))
+                return dir.Parent;
+            dir = dir.Parent;
+        }
+        return dir;
+    }
+
+
     private static TestRun? DeserializeTestRun(Stream stream)
     {
         XDocument doc;
@@ -208,6 +211,8 @@ public class TrxParser
         if (root is null)
             return null;
 
+        var ns = root.Name.Namespace;
+
         var testRun = new TestRun
         {
             Name = (string?)root.Attribute("name"),
@@ -215,7 +220,7 @@ public class TrxParser
             RunUser = (string?)root.Attribute("runUser"),
         };
 
-        var timesEl = root.Element(TrxNs + "Times");
+        var timesEl = root.Element(ns + "Times");
         if (timesEl is not null)
         {
             testRun.Times = new Times
@@ -227,33 +232,33 @@ public class TrxParser
             };
         }
 
-        var testSettingsEl = root.Element(TrxNs + "TestSettings");
+        var testSettingsEl = root.Element(ns + "TestSettings");
         if (testSettingsEl is not null)
         {
             testRun.TestSettings = new TestSettings
             {
                 Name = (string?)testSettingsEl.Attribute("name"),
                 Id = (string?)testSettingsEl.Attribute("id"),
-                Deployment = testSettingsEl.Element(TrxNs + "Deployment") is XElement deployEl
+                Deployment = testSettingsEl.Element(ns + "Deployment") is XElement deployEl
                     ? new Deployment { RunDeploymentRoot = (string?)deployEl.Attribute("runDeploymentRoot") }
                     : null,
             };
         }
 
-        var testDefsEl = root.Element(TrxNs + "TestDefinitions");
+        var testDefsEl = root.Element(ns + "TestDefinitions");
         if (testDefsEl is not null)
         {
             testRun.TestDefinitions = new TestDefinitions
             {
-                UnitTests = testDefsEl.Elements(TrxNs + "UnitTest").Select(ut =>
+                UnitTests = testDefsEl.Elements(ns + "UnitTest").Select(ut =>
                 {
-                    var tmEl = ut.Element(TrxNs + "TestMethod");
+                    var tmEl = ut.Element(ns + "TestMethod");
                     return new UnitTest
                     {
                         Id = (string?)ut.Attribute("id"),
                         Name = (string?)ut.Attribute("name"),
                         Storage = (string?)ut.Attribute("storage"),
-                        Execution = ut.Element(TrxNs + "Execution") is XElement execEl
+                        Execution = ut.Element(ns + "Execution") is XElement execEl
                             ? new Execution { Id = (string?)execEl.Attribute("id") }
                             : null,
                         TestMethod = tmEl is not null ? new TestMethod
@@ -268,28 +273,28 @@ public class TrxParser
             };
         }
 
-        var resultsEl = root.Element(TrxNs + "Results");
+        var resultsEl = root.Element(ns + "Results");
         if (resultsEl is not null)
         {
             testRun.Results = new Results
             {
-                UnitTestResults = resultsEl.Elements(TrxNs + "UnitTestResult").Select(ur =>
+                UnitTestResults = resultsEl.Elements(ns + "UnitTestResult").Select(ur =>
                 {
                     Output? output = null;
-                    if (ur.Element(TrxNs + "Output") is XElement outputEl)
+                    if (ur.Element(ns + "Output") is XElement outputEl)
                     {
                         ErrorInfo? errorInfo = null;
-                        if (outputEl.Element(TrxNs + "ErrorInfo") is XElement errorInfoEl)
+                        if (outputEl.Element(ns + "ErrorInfo") is XElement errorInfoEl)
                         {
                             errorInfo = new ErrorInfo
                             {
-                                Message = (string?)errorInfoEl.Element(TrxNs + "Message"),
-                                StackTrace = (string?)errorInfoEl.Element(TrxNs + "StackTrace"),
+                                Message = (string?)errorInfoEl.Element(ns + "Message"),
+                                StackTrace = (string?)errorInfoEl.Element(ns + "StackTrace"),
                             };
                         }
                         output = new Output
                         {
-                            StdOut = (string?)outputEl.Element(TrxNs + "StdOut"),
+                            StdOut = (string?)outputEl.Element(ns + "StdOut"),
                             ErrorInfo = errorInfo,
                         };
                     }
@@ -312,11 +317,11 @@ public class TrxParser
             };
         }
 
-        var resultSummaryEl = root.Element(TrxNs + "ResultSummary");
+        var resultSummaryEl = root.Element(ns + "ResultSummary");
         if (resultSummaryEl is not null)
         {
             Counters? counters = null;
-            if (resultSummaryEl.Element(TrxNs + "Counters") is XElement countersEl)
+            if (resultSummaryEl.Element(ns + "Counters") is XElement countersEl)
             {
                 counters = new Counters
                 {
@@ -339,11 +344,11 @@ public class TrxParser
                 };
             }
             Output? summaryOutput = null;
-            if (resultSummaryEl.Element(TrxNs + "Output") is XElement summaryOutputEl)
+            if (resultSummaryEl.Element(ns + "Output") is XElement summaryOutputEl)
             {
                 summaryOutput = new Output
                 {
-                    StdOut = (string?)summaryOutputEl.Element(TrxNs + "StdOut"),
+                    StdOut = (string?)summaryOutputEl.Element(ns + "StdOut"),
                 };
             }
             testRun.ResultSummary = new ResultSummary
@@ -354,12 +359,12 @@ public class TrxParser
             };
         }
 
-        var testListsEl = root.Element(TrxNs + "TestLists");
+        var testListsEl = root.Element(ns + "TestLists");
         if (testListsEl is not null)
         {
             testRun.TestLists = new TestLists
             {
-                Items = testListsEl.Elements(TrxNs + "TestList").Select(tl => new TestList
+                Items = testListsEl.Elements(ns + "TestList").Select(tl => new TestList
                 {
                     Name = (string?)tl.Attribute("name"),
                     Id = (string?)tl.Attribute("id"),
@@ -367,12 +372,12 @@ public class TrxParser
             };
         }
 
-        var testEntriesEl = root.Element(TrxNs + "TestEntries");
+        var testEntriesEl = root.Element(ns + "TestEntries");
         if (testEntriesEl is not null)
         {
             testRun.TestEntries = new TestEntries
             {
-                Items = testEntriesEl.Elements(TrxNs + "TestEntry").Select(te => new TestEntry
+                Items = testEntriesEl.Elements(ns + "TestEntry").Select(te => new TestEntry
                 {
                     TestId = (string?)te.Attribute("testId"),
                     ExecutionId = (string?)te.Attribute("executionId"),
