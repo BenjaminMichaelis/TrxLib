@@ -18,7 +18,7 @@ public class TrxParserTests
     public async Task Parse_OneTestFailureTrx_ParsesClassNamesCorrectly()
     {
         var results = TrxParser.Parse(new FileInfo(GetSampleFilePath("OneTestFailure.trx")));
-        await Assert.That(results).HasCount(19);
+        await Assert.That(results).Count().IsEqualTo(19);
         await Assert.That(results.Select(r => r.TestMethod?.ClassName + "." + r.TestMethod?.Name ?? throw new InvalidOperationException("TestMethod is null")))
             .Contains("AddisonWesley.Michaelis.EssentialCSharp.Chapter01.Listing01_03.Tests.HelloWorldTests.Main_UpDown");
     }
@@ -36,7 +36,7 @@ public class TrxParserTests
     {
         var results = TrxParser.Parse(new FileInfo(GetSampleFilePath("OneTestFailure.trx")));
         // 19 tests in the file, 18 passed, 1 failed
-        await Assert.That(results).HasCount(19);
+        await Assert.That(results).Count().IsEqualTo(19);
         await Assert.That(results.Count(r => r.Outcome == TestOutcome.Passed)).IsEqualTo(18);
         await Assert.That(results.Count(r => r.Outcome == TestOutcome.Failed)).IsEqualTo(1);
     }
@@ -67,7 +67,7 @@ public class TrxParserTests
     {
         var results = TrxParser.Parse(new FileInfo(GetSampleFilePath(Path.Combine("1", "example1_OSX.trx"))));
         // 88 tests in the file, 83 passed, 4 not executed, 1 failed
-        await Assert.That(results).HasCount(88);
+        await Assert.That(results).Count().IsEqualTo(88);
         await Assert.That(results.Count(r => r.Outcome == TestOutcome.Passed)).IsEqualTo(83);
         await Assert.That(results.Count(r => r.Outcome == TestOutcome.NotExecuted)).IsEqualTo(4);
         await Assert.That(results.Count(r => r.Outcome == TestOutcome.Failed)).IsEqualTo(1);
@@ -187,7 +187,7 @@ public class TrxParserTests
     public async Task Parse_TheoryTestsTrx_ParsesAllThreeTestResults()
     {
         var results = TrxParser.Parse(new FileInfo(GetSampleFilePath("theory-tests.trx")));
-        await Assert.That(results).HasCount(3);
+        await Assert.That(results).Count().IsEqualTo(3);
         await Assert.That(results.Count(r => r.Outcome == TestOutcome.Passed)).IsEqualTo(3);
     }
 
@@ -252,7 +252,7 @@ public class TrxParserTests
         await Assert.That(results.OriginalTestRun).IsNotNull();
         var testLists = results.OriginalTestRun!.TestLists?.Items;
         await Assert.That(testLists).IsNotNull();
-        await Assert.That(testLists!).HasCount(2);
+        await Assert.That(testLists!).Count().IsEqualTo(2);
         await Assert.That(testLists).HasSingleItem(l => l.Name == "Results Not in a List" && l.Id == "8c84fa94-04c1-424b-9868-57a2d4851a1d");
         await Assert.That(testLists).HasSingleItem(l => l.Name == "All Loaded Results"     && l.Id == "19431567-8539-422a-85d7-44ee4e166bda");
     }
@@ -265,7 +265,7 @@ public class TrxParserTests
         await Assert.That(results.OriginalTestRun).IsNotNull();
         var entries = results.OriginalTestRun!.TestEntries?.Items;
         await Assert.That(entries).IsNotNull();
-        await Assert.That(entries!).HasCount(19);
+        await Assert.That(entries!).Count().IsEqualTo(19);
         // Spot-check one entry links testId -> executionId -> testListId correctly.
         await Assert.That(entries).HasSingleItem(e =>
             e.TestId       == "35e9c03c-7c18-2ee8-7216-91e69cfe406e" &&
@@ -324,7 +324,7 @@ public class TrxParserTests
     public async Task Parse_AbortedRunTrx_ParsesRealAbortedRunFixture()
     {
         var results = TrxParser.Parse(new FileInfo(GetSampleFilePath("aborted-outcome.trx")));
-        await Assert.That(results).HasCount(1);
+        await Assert.That(results).Count().IsEqualTo(1);
         await Assert.That(results.Single().Outcome).IsEqualTo(TestOutcome.Passed);
         await Assert.That(results.OriginalTestRun?.ResultSummary?.Outcome).IsEqualTo("Failed");
     }
@@ -335,7 +335,7 @@ public class TrxParserTests
     public async Task Parse_NoNamespaceTrx_ParsesResultsWithoutNamespace()
     {
         var results = TrxParser.Parse(new FileInfo(GetSampleFilePath("no-namespace.trx")));
-        await Assert.That(results).HasCount(5);
+        await Assert.That(results).Count().IsEqualTo(5).Because("the parser must fall back to namespace-agnostic element matching when xmlns is absent");
     }
 
     [Test]
