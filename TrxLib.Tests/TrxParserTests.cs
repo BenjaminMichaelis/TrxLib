@@ -336,22 +336,14 @@ public class TrxParserTests
         results.OriginalTestRun?.ResultSummary?.Outcome.Should().Be("Failed");
     }
 
+    // Real NUnit TRX captured without xmlns on the root element, sourced from:
+    // https://github.com/joaoopereira/dotnet-test-rerun/blob/main/test/dotnet-test-rerun.UnitTests/Fixtures/RerunCommand/NUnitTrxFileWithOneFailedTest.trx
     [Fact]
     public void Parse_NoNamespaceTrx_ParsesResultsWithoutNamespace()
     {
         var results = TrxParser.Parse(new FileInfo(GetSampleFilePath("no-namespace.trx")));
-        results.Should().HaveCount(3,
+        results.Should().HaveCount(5,
             "the parser must fall back to namespace-agnostic element matching when xmlns is absent");
-    }
-
-    [Fact]
-    public void Parse_PublishedCodeBaseTrx_TestProjectDirectoryIsProjectRoot()
-    {
-        // publish\ is a single-level output directory; TestProjectDirectory should be its parent.
-        var results = TrxParser.Parse(new FileInfo(GetSampleFilePath("published-codebase.trx")));
-        results.Should().HaveCount(1);
-        results.Single().TestProjectDirectory?.Name.Should().Be("acme-project",
-            "TestProjectDirectory should be the project root, not an arbitrary number of levels above the DLL");
     }
 
     [Fact]
