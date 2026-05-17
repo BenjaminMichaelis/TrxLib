@@ -131,14 +131,14 @@ public class TrxParser
             if (codebaseFile?.Directory != null)
             {
                 var dir = codebaseFile.Directory;
-                while (dir?.Parent != null && !string.Equals(dir.Name, "bin", StringComparison.OrdinalIgnoreCase))
+                while (dir.Parent != null && !string.Equals(dir.Name, "bin", StringComparison.OrdinalIgnoreCase))
                 {
                     dir = dir.Parent;
                 }
-                // dir is now the 'bin' folder (or root if no 'bin' found); its parent is the project root.
-                testProjectDirectory = string.Equals(dir?.Name, "bin", StringComparison.OrdinalIgnoreCase)
-                    ? dir!.Parent
-                    : dir;
+                // Return the parent of the 'bin' folder (the project root).
+                // If no 'bin' folder was found, leave testProjectDirectory as null.
+                if (string.Equals(dir.Name, "bin", StringComparison.OrdinalIgnoreCase))
+                    testProjectDirectory = dir.Parent;
             }
 
             // Extract StdOut if available
