@@ -1,6 +1,6 @@
 ---
-name: trx-fixture-policy
-description: Use this skill when adding or updating sample .trx files in TrxLib.Tests/SampleTrxFiles. It describes the required workflow for capturing real TRX output from dotnet test rather than hand-writing synthetic XML.
+name: writing-test
+description: Use this skill when writing tests.
 ---
 
 # TRX fixture policy for tests
