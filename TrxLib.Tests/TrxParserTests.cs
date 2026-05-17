@@ -14,6 +14,58 @@ public class TrxParserTests
             "TrxLib.Tests", "SampleTrxFiles", fileName);
     }
 
+    private static TestResultSet ParseGeneratedTheoryTrxViaCopiedFile()
+    {
+        const string theoryTrx = """
+            <?xml version="1.0" encoding="utf-8"?>
+            <TestRun id="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee" name="TheoryTest Run" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+              <Times creation="2024-01-01T00:00:00.0000000+00:00" queuing="2024-01-01T00:00:00.0000000+00:00" start="2024-01-01T00:00:00.0000000+00:00" finish="2024-01-01T00:00:00.0000000+00:00" />
+              <Results>
+                <UnitTestResult executionId="11111111-1111-1111-1111-111111111111" testId="aaaaaaaa-1111-1111-1111-111111111111" testName="AddNumbers(1, 2)" duration="00:00:00.001" startTime="2024-01-01T00:00:00+00:00" endTime="2024-01-01T00:00:00+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="19431567-8539-422a-85d7-44ee4e166bda" relativeResultsDirectory="11111111-1111-1111-1111-111111111111" />
+                <UnitTestResult executionId="22222222-2222-2222-2222-222222222222" testId="aaaaaaaa-2222-2222-2222-222222222222" testName="AddNumbers(0, 0)" duration="00:00:00.001" startTime="2024-01-01T00:00:00+00:00" endTime="2024-01-01T00:00:00+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="19431567-8539-422a-85d7-44ee4e166bda" relativeResultsDirectory="22222222-2222-2222-2222-222222222222" />
+                <UnitTestResult executionId="33333333-3333-3333-3333-333333333333" testId="bbbbbbbb-3333-3333-3333-333333333333" testName="PlainTest" duration="00:00:00.001" startTime="2024-01-01T00:00:00+00:00" endTime="2024-01-01T00:00:00+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="19431567-8539-422a-85d7-44ee4e166bda" relativeResultsDirectory="33333333-3333-3333-3333-333333333333" />
+              </Results>
+              <TestDefinitions>
+                <UnitTest name="AddNumbers(1, 2)" id="aaaaaaaa-1111-1111-1111-111111111111">
+                  <Execution id="11111111-1111-1111-1111-111111111111" />
+                  <TestMethod className="Acme.Tests.MathTests" name="AddNumbers" />
+                </UnitTest>
+                <UnitTest name="AddNumbers(0, 0)" id="aaaaaaaa-2222-2222-2222-222222222222">
+                  <Execution id="22222222-2222-2222-2222-222222222222" />
+                  <TestMethod className="Acme.Tests.MathTests" name="AddNumbers" />
+                </UnitTest>
+                <UnitTest name="PlainTest" id="bbbbbbbb-3333-3333-3333-333333333333">
+                  <Execution id="33333333-3333-3333-3333-333333333333" />
+                  <TestMethod className="Acme.Tests.MathTests" name="PlainTest" />
+                </UnitTest>
+              </TestDefinitions>
+              <TestLists>
+                <TestList name="Results Not in a List" id="19431567-8539-422a-85d7-44ee4e166bda" />
+              </TestLists>
+              <ResultSummary outcome="Completed">
+                <Counters total="3" executed="3" passed="3" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+              </ResultSummary>
+            </TestRun>
+            """;
+
+        var sourcePath = Path.Combine(Path.GetTempPath(), $"theory-source-{Guid.NewGuid():N}.trx");
+        var copiedPath = Path.Combine(Path.GetTempPath(), $"theory-copy-{Guid.NewGuid():N}.trx");
+
+        try
+        {
+            File.WriteAllText(sourcePath, theoryTrx, System.Text.Encoding.UTF8);
+            File.Copy(sourcePath, copiedPath, overwrite: true);
+            return TrxParser.Parse(new FileInfo(copiedPath));
+        }
+        finally
+        {
+            if (File.Exists(sourcePath))
+                File.Delete(sourcePath);
+            if (File.Exists(copiedPath))
+                File.Delete(copiedPath);
+        }
+    }
+
     [Fact]
     public void Parse_OneTestFailureTrx_ParsesClassNamesCorrectly()
     {
@@ -171,7 +223,7 @@ public class TrxParserTests
     [Fact]
     public void Parse_TheoryTestsTrx_AppendsSuffixToFqtnForParameterizedTests()
     {
-        var results = TrxParser.Parse(new FileInfo(GetSampleFilePath("theory-tests.trx")));
+        var results = ParseGeneratedTheoryTrxViaCopiedFile();
         results.Select(r => r.FullyQualifiedTestName)
                .Should()
                .Contain("Acme.Tests.MathTests.AddNumbers(1, 2)");
@@ -183,7 +235,7 @@ public class TrxParserTests
     [Fact]
     public void Parse_TheoryTestsTrx_DoesNotAppendSuffixForNonParameterizedTest()
     {
-        var results = TrxParser.Parse(new FileInfo(GetSampleFilePath("theory-tests.trx")));
+        var results = ParseGeneratedTheoryTrxViaCopiedFile();
         results.Single(r => r.FullyQualifiedTestName == "Acme.Tests.MathTests.PlainTest")
                .Should().NotBeNull();
     }
@@ -191,7 +243,7 @@ public class TrxParserTests
     [Fact]
     public void Parse_TheoryTestsTrx_ParsesAllThreeTestResults()
     {
-        var results = TrxParser.Parse(new FileInfo(GetSampleFilePath("theory-tests.trx")));
+        var results = ParseGeneratedTheoryTrxViaCopiedFile();
         results.Should().HaveCount(3);
         results.Count(r => r.Outcome == TestOutcome.Passed).Should().Be(3);
     }

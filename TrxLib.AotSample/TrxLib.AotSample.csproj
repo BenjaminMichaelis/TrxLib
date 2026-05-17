@@ -6,8 +6,6 @@
     <PublishAot>true</PublishAot>
     <IsPublishable>true</IsPublishable>
     <IsPackable>false</IsPackable>
-    <!-- Suppress the "not published as AOT" info message during regular builds -->
-    <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
   </PropertyGroup>
 
   <ItemGroup>
