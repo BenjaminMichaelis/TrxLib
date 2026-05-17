@@ -66,11 +66,19 @@ public class TrxParser
             {
                 if (!string.IsNullOrEmpty(testMethodDomain.ClassName) && !string.IsNullOrEmpty(testMethodDomain.Name))
                 {
-                    // If Name already starts with ClassName, use Name as-is
-                    if (testMethodDomain.Name.StartsWith(testMethodDomain.ClassName + "."))
-                        fullyQualifiedTestName = testMethodDomain.Name;
+                    // If Name already contains the full FQTN (starts with ClassName), use Name as-is
+                    // as the base; otherwise build it from ClassName.Name.
+                    var baseFqtn = testMethodDomain.Name.StartsWith(testMethodDomain.ClassName + ".", StringComparison.Ordinal)
+                        ? testMethodDomain.Name
+                        : $"{testMethodDomain.ClassName}.{testMethodDomain.Name}";
+
+                    // Preserve theory-test parameter suffixes: if testName starts with the base
+                    // FQTN and has additional content (e.g. "(param: value)"), use testName
+                    // directly so each parameterized invocation has a unique FQTN.
+                    if (result.TestName != null && result.TestName.StartsWith(baseFqtn, StringComparison.Ordinal))
+                        fullyQualifiedTestName = result.TestName;
                     else
-                        fullyQualifiedTestName = $"{testMethodDomain.ClassName}.{testMethodDomain.Name}";
+                        fullyQualifiedTestName = baseFqtn;
                 }
                 else
                 {
@@ -134,6 +142,7 @@ public class TrxParser
         var testResultSet = new TestResultSet(results)
         {
             TestRunName = testRun.Name ?? string.Empty,
+            TestRunId = testRun.Id ?? string.Empty,
             TestFilePath = trxFile.FullName,
             OriginalTestRun = testRun
         };

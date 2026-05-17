@@ -27,4 +27,16 @@ public class UnitTest
     /// </summary>
     [XmlElement("TestMethod")]
     public TestMethod? TestMethod { get; set; }
+
+    /// <summary>
+    /// Gets or sets the path to the test assembly. Stored as a lowercased path by vstest.
+    /// </summary>
+    [XmlAttribute("storage")]
+    public string? Storage { get; set; }
+
+    /// <summary>
+    /// Gets or sets the execution element containing the execution ID for this test definition.
+    /// </summary>
+    [XmlElement("Execution")]
+    public Execution? Execution { get; set; }
 }

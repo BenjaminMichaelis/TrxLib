@@ -57,4 +57,28 @@ public class UnitTestResult
     /// </summary>
     [XmlElement("Output")]
     public Output? Output { get; set; }
+
+    /// <summary>
+    /// Gets or sets the execution identifier. Links this result to its TestEntry and UnitTest/Execution records.
+    /// </summary>
+    [XmlAttribute("executionId")]
+    public string? ExecutionId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the test list identifier. References a TestList in the TestLists section.
+    /// </summary>
+    [XmlAttribute("testListId")]
+    public string? TestListId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the test type GUID identifying the kind of test (e.g. unit test adapter GUID).
+    /// </summary>
+    [XmlAttribute("testType")]
+    public string? TestType { get; set; }
+
+    /// <summary>
+    /// Gets or sets the relative results directory for this test result's attachments.
+    /// </summary>
+    [XmlAttribute("relativeResultsDirectory")]
+    public string? RelativeResultsDirectory { get; set; }
 }
