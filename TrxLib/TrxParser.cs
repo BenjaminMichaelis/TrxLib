@@ -77,10 +77,16 @@ public class TrxParser
                         ? testMethodDomain.Name.Substring(testMethodDomain.Name.LastIndexOf('.') + 1)
                         : testMethodDomain.Name;
                     var paramSuffix = string.Empty;
-                    if (result.TestName?.StartsWith(methodShortName) == true)
+                    if (!string.IsNullOrEmpty(result.TestName))
                     {
-                        var candidate = result.TestName.Substring(methodShortName.Length);
-                        if (candidate.StartsWith("("))
+                        string? candidate = null;
+
+                        if (result.TestName.StartsWith(baseFqtn))
+                            candidate = result.TestName.Substring(baseFqtn.Length);
+                        else if (result.TestName.StartsWith(methodShortName))
+                            candidate = result.TestName.Substring(methodShortName.Length);
+
+                        if (candidate?.StartsWith("(") == true)
                             paramSuffix = candidate;
                     }
                     fullyQualifiedTestName = baseFqtn + paramSuffix;

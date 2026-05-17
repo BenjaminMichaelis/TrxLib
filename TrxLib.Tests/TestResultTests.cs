@@ -77,4 +77,36 @@ public class TestResultTests
         testResult.Namespace.Should().BeNull();
         testResult.TestName.Should().Be(fullyQualifiedTestName);
     }
+
+    [Fact]
+    public void Theory_test_with_dotted_param_is_parsed_correctly_when_testMethod_provided()
+    {
+        // When testMethod is supplied the constructor must use testMethod.ClassName
+        // directly instead of splitting the FQTN on '.'.  Without the fix, a param
+        // value like "foo.bar" causes ClassName and TestName to be corrupt.
+        const string className = "System.CommandLine.Tests.ParserTests";
+        const string methodName = "Parse_theory_method";
+        const string fqtn = $"{className}.{methodName}(param: \"foo.bar\")";
+
+        var testResult = new TestResult(fqtn, TestOutcome.Passed,
+            testMethod: new TestMethod { ClassName = className, Name = methodName });
+
+        using var _ = new AssertionScope();
+        testResult.FullyQualifiedTestName.Should().Be(fqtn);
+        testResult.FullyQualifiedClassName.Should().Be(className);
+        testResult.ClassName.Should().Be("ParserTests");
+        testResult.Namespace.Should().Be("System.CommandLine.Tests");
+        testResult.TestName.Should().Be($"{methodName}(param: \"foo.bar\")");
+    }
+
+    [Fact]
+    public void ToString_DoesNotThrow_ForOutcomeValueNotInEnum()
+    {
+        // TestResult.ToString() has a _ => throw arm that crashes on any enum value
+        // not listed in its switch expression (e.g. future additions to TestOutcome, or
+        // values written by vstest that TrxLib doesn't yet map, such as "Completed").
+        var testResult = new TestResult("some.namespace.SomeClass.SomeTest", (TestOutcome)99);
+        var act = () => testResult.ToString();
+        act.Should().NotThrow<ArgumentOutOfRangeException>();
+    }
 }

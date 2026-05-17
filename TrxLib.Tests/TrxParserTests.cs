@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 
 using AwesomeAssertions;
+using AwesomeAssertions.Execution;
 
 namespace TrxLib.Tests;
 
@@ -201,6 +202,117 @@ public class TrxParserTests
         var results = TrxParser.Parse(new FileInfo(GetSampleFilePath(Path.Combine("1", "example1_OSX.trx"))));
         var test = results.Single(r => r.FullyQualifiedTestName == "Microsoft.DotNet.Cli.Utils.Tests.GivenARootedCommandResolver.It_escapes_CommandArguments_when_returning_a_CommandSpec");
         test.Codebase?.FullName.Should().Be(@"/Users/josequ/dev/cli/test/Microsoft.DotNet.Cli.Utils.Tests/bin/Debug/netcoreapp1.0/Microsoft.DotNet.Cli.Utils.Tests.dll");
+    }
+
+    // ── Parser regression tests ──────────────────────────────────────────────────
+    // These cover attributes/elements present in sample TRX files that were
+    // previously silently discarded. All tests below should be GREEN.
+
+    [Fact]
+    public void Parse_OneTestFailureTrx_PopulatesTestRunId()
+    {
+        // TestResultSet.TestRunId is never assigned; parser must set it from TestRun.Id.
+        var results = TrxParser.Parse(new FileInfo(GetSampleFilePath("OneTestFailure.trx")));
+        results.TestRunId.Should().Be("a1293f2f-ba2d-4aa4-91a7-ceed97fd4735");
+    }
+
+    [Fact]
+    public void Parse_OneTestFailureTrx_ParsesRunUser()
+    {
+        // runUser attribute on <TestRun> is present in every TRX file but currently not parsed.
+        var results = TrxParser.Parse(new FileInfo(GetSampleFilePath("OneTestFailure.trx")));
+        results.OriginalTestRun.Should().NotBeNull();
+        results.OriginalTestRun!.RunUser.Should().Be("BenjaminMichaelis");
+    }
+
+    [Fact]
+    public void Parse_OneTestFailureTrx_ParsesResultSummaryOutcome()
+    {
+        // <ResultSummary outcome="..."> is present in every TRX file but currently not parsed.
+        var results = TrxParser.Parse(new FileInfo(GetSampleFilePath("OneTestFailure.trx")));
+        results.OriginalTestRun.Should().NotBeNull();
+        results.OriginalTestRun!.ResultSummary.Should().NotBeNull();
+        results.OriginalTestRun!.ResultSummary!.Outcome.Should().Be("Failed");
+    }
+
+    [Fact]
+    public void Parse_OneTestFailureTrx_ParsesCountersTotals()
+    {
+        // <Counters total="19" passed="18" failed="1" ...> inside <ResultSummary> but currently not parsed.
+        var results = TrxParser.Parse(new FileInfo(GetSampleFilePath("OneTestFailure.trx")));
+        results.OriginalTestRun.Should().NotBeNull();
+        var counters = results.OriginalTestRun!.ResultSummary?.Counters;
+        counters.Should().NotBeNull();
+        using var _ = new AssertionScope();
+        counters!.Total.Should().Be(19);
+        counters.Passed.Should().Be(18);
+        counters.Failed.Should().Be(1);
+        counters.Executed.Should().Be(19);
+    }
+
+    [Fact]
+    public void Parse_OneTestFailureTrx_ParsesTestLists()
+    {
+        // <TestLists> always has two default entries but currently not parsed.
+        var results = TrxParser.Parse(new FileInfo(GetSampleFilePath("OneTestFailure.trx")));
+        results.OriginalTestRun.Should().NotBeNull();
+        var testLists = results.OriginalTestRun!.TestLists?.Items;
+        testLists.Should().NotBeNull();
+        testLists.Should().HaveCount(2);
+        testLists.Should().ContainSingle(l => l.Name == "Results Not in a List" && l.Id == "8c84fa94-04c1-424b-9868-57a2d4851a1d");
+        testLists.Should().ContainSingle(l => l.Name == "All Loaded Results"     && l.Id == "19431567-8539-422a-85d7-44ee4e166bda");
+    }
+
+    [Fact]
+    public void Parse_OneTestFailureTrx_ParsesTestEntries()
+    {
+        // <TestEntries> is present in every TRX file but currently not parsed.
+        var results = TrxParser.Parse(new FileInfo(GetSampleFilePath("OneTestFailure.trx")));
+        results.OriginalTestRun.Should().NotBeNull();
+        var entries = results.OriginalTestRun!.TestEntries?.Items;
+        entries.Should().NotBeNull();
+        entries.Should().HaveCount(19);
+        // Spot-check one entry links testId -> executionId -> testListId correctly.
+        entries.Should().ContainSingle(e =>
+            e.TestId       == "35e9c03c-7c18-2ee8-7216-91e69cfe406e" &&
+            e.ExecutionId  == "9682c228-090a-47f3-96d2-26ffa23c9a53" &&
+            e.TestListId   == "8c84fa94-04c1-424b-9868-57a2d4851a1d");
+    }
+
+    [Fact]
+    public void Parse_OneTestFailureTrx_ParsesUnitTestResultExecutionId()
+    {
+        // executionId attribute on <UnitTestResult> is present in every TRX but currently not parsed.
+        var results = TrxParser.Parse(new FileInfo(GetSampleFilePath("OneTestFailure.trx")));
+        results.OriginalTestRun.Should().NotBeNull();
+        var rawResults = results.OriginalTestRun!.Results?.UnitTestResults;
+        rawResults.Should().NotBeNull();
+        rawResults.Should().ContainSingle(r => r.ExecutionId == "9682c228-090a-47f3-96d2-26ffa23c9a53");
+    }
+
+    [Fact]
+    public void Parse_OneTestFailureTrx_ParsesUnitTestDefinitionAttributes()
+    {
+        // Both storage and <Execution id="..."/> are on <UnitTest> but currently not parsed.
+        var results = TrxParser.Parse(new FileInfo(GetSampleFilePath("OneTestFailure.trx")));
+        var unitTests = results.OriginalTestRun?.TestDefinitions?.UnitTests;
+        unitTests.Should().NotBeNull();
+        using var _ = new AssertionScope();
+        unitTests.Should().Contain(u => u.Storage == @"essentialcsharp\src\chapter01.tests\bin\debug\net6.0\chapter01.tests.dll");
+        unitTests.Should().Contain(u => u.Execution != null && u.Execution.Id == "86ff1fe0-ef46-4281-b70a-7ecc3ed2376b");
+    }
+
+    [Fact]
+    public void Parse_ComplexTrx_FullyQualifiedTestNameIncludesTheoryParameters()
+    {
+        // The parser builds FQTN from ClassName.Name, discarding the (params) suffix from testName.
+        // For theory tests every invocation gets the same FQTN, making distinct runs indistinguishable.
+        var results = TrxParser.Parse(new FileInfo(GetSampleFilePath("complex.trx")));
+        const string expectedFqtn =
+            "System.CommandLine.Tests.ParserTests+MultiplePositions" +
+            ".When_an_option_is_shared_between_an_outer_and_inner_command_then_specifying_in_one_does_not_result_in_error_on_other" +
+            "(commandLine: \"outer --the-option xyz inner\")";
+        results.Select(r => r.FullyQualifiedTestName).Should().Contain(expectedFqtn);
     }
 
     [Fact]
