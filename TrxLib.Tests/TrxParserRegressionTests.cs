@@ -3,20 +3,19 @@ using AwesomeAssertions;
 namespace TrxLib.Tests;
 
 /// <summary>
-/// Regression tests for bugs found by comparing our object model to the
-/// upstream vstest TRX ObjectModel.
+/// Regression tests verifying TRX parsing correctness against the vstest object model.
 /// </summary>
-public class KnownBugsTests
+public class TrxParserRegressionTests
 {
     // -------------------------------------------------------------------------
-    // Bug 3 – All vstest outcome strings (Error, Aborted, NotRunnable, Disconnected,
-    //          Warning, Completed, InProgress, PassedButRunAborted) must round-trip
-    //          correctly through the parser. A missing outcome attribute must map
-    //          to TestOutcome.Error, not NotExecuted.
+    // Outcome parsing – All vstest outcome strings (Error, Aborted, NotRunnable,
+    // Disconnected, Warning, Completed, InProgress, PassedButRunAborted) must
+    // round-trip correctly through the parser. A missing outcome attribute must
+    // map to TestOutcome.Error, not NotExecuted.
     // -------------------------------------------------------------------------
 
     [Fact]
-    public void Bug_Parse_ErrorOutcome_IsNotSilentlyMappedToNotExecuted()
+    public void Parse_ErrorOutcome_IsNotSilentlyMappedToNotExecuted()
     {
         // vstest writes outcome="Error" when the test adapter itself crashes or the
         // test process aborts unexpectedly. This is NOT the same as "not executed".
@@ -28,7 +27,7 @@ public class KnownBugsTests
     }
 
     [Fact]
-    public void Bug_Parse_AbortedOutcome_IsNotSilentlyMappedToNotExecuted()
+    public void Parse_AbortedOutcome_IsNotSilentlyMappedToNotExecuted()
     {
         // vstest writes outcome="Aborted" when the framework (not the user) terminates
         // the test mid-execution.
@@ -40,7 +39,7 @@ public class KnownBugsTests
     }
 
     [Fact]
-    public void Bug_Parse_NotRunnableOutcome_IsNotSilentlyMappedToNotExecuted()
+    public void Parse_NotRunnableOutcome_IsNotSilentlyMappedToNotExecuted()
     {
         // vstest writes outcome="NotRunnable" when ITestElement.IsRunnable == false.
         using var trxFile = new TempTrxFile(MinimalTrx(outcome: "NotRunnable"));
@@ -51,7 +50,7 @@ public class KnownBugsTests
     }
 
     [Fact]
-    public void Bug_Parse_MissingOutcomeAttribute_MapsToError()
+    public void Parse_MissingOutcomeAttribute_MapsToError()
     {
         // In vstest's serialization, TestOutcome.Error == 0 is the enum default.
         // XmlPersistence.SaveSimpleField() skips writing the attribute when value == default,
@@ -65,21 +64,21 @@ public class KnownBugsTests
     }
 
     // -------------------------------------------------------------------------
-    // Bug 4 – TestProjectDirectory must be resolved correctly for all standard
-    //          .NET SDK output layouts, including RID-qualified and publish
-    //          subdirectories nested under bin/.
+    // Directory resolution – TestProjectDirectory must be resolved correctly for
+    // all standard .NET SDK output layouts, including RID-qualified and publish
+    // subdirectories nested under bin/.
     // -------------------------------------------------------------------------
 
     [Fact]
-    public void Bug_Parse_TestProjectDirectory_IsCorrectForRidQualifiedOutputPath() =>
+    public void Parse_TestProjectDirectory_IsCorrectForRidQualifiedOutputPath() =>
         AssertProjectRootResolves("fake_project_rid", "bin", "Debug", "net8.0", "win-x64", "MyProject.dll");
 
     [Fact]
-    public void Bug_Parse_TestProjectDirectory_IsCorrectForPublishOutputPath() =>
+    public void Parse_TestProjectDirectory_IsCorrectForPublishOutputPath() =>
         AssertProjectRootResolves("fake_project_publish", "bin", "Release", "net8.0", "publish", "MyProject.dll");
 
     [Fact]
-    public void Bug_Parse_TestProjectDirectory_IsCorrectForRidPlusPublishOutputPath() =>
+    public void Parse_TestProjectDirectory_IsCorrectForRidPlusPublishOutputPath() =>
         AssertProjectRootResolves("fake_project_rid_publish", "bin", "Release", "net8.0", "linux-x64", "publish", "MyProject.dll");
 
     private static void AssertProjectRootResolves(string subfolder, params string[] relativeSegments)
