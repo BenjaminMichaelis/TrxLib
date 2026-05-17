@@ -18,7 +18,7 @@ public enum TestOutcome
     Failed,
 
     /// <summary>
-    /// The test timed out
+    /// The test timed out.
     /// </summary>
     Timeout,
 
