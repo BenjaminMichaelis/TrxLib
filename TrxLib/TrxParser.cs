@@ -67,7 +67,7 @@ public class TrxParser
             {
                 if (!string.IsNullOrEmpty(testMethodDomain.ClassName) && !string.IsNullOrEmpty(testMethodDomain.Name))
                 {
-                    string baseFqtn = testMethodDomain.Name.StartsWith(testMethodDomain.ClassName + ".")
+                    string baseFqtn = testMethodDomain.Name.StartsWith(testMethodDomain.ClassName + ".", StringComparison.Ordinal)
                         ? testMethodDomain.Name
                         : $"{testMethodDomain.ClassName}.{testMethodDomain.Name}";
 
@@ -81,12 +81,12 @@ public class TrxParser
                     {
                         string? candidate = null;
 
-                        if (result.TestName.StartsWith(baseFqtn))
+                        if (result.TestName.StartsWith(baseFqtn, StringComparison.Ordinal))
                             candidate = result.TestName.Substring(baseFqtn.Length);
-                        else if (result.TestName.StartsWith(methodShortName))
+                        else if (result.TestName.StartsWith(methodShortName, StringComparison.Ordinal))
                             candidate = result.TestName.Substring(methodShortName.Length);
 
-                        if (candidate?.StartsWith("(") == true)
+                        if (candidate?.StartsWith("(", StringComparison.Ordinal) == true)
                             paramSuffix = candidate;
                     }
                     fullyQualifiedTestName = baseFqtn + paramSuffix;
