@@ -167,6 +167,34 @@ public class TrxParserTests
         return !RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
     }
 
+    [Fact]
+    public void Parse_TheoryTestsTrx_AppendsSuffixToFqtnForParameterizedTests()
+    {
+        var results = TrxParser.Parse(new FileInfo(GetSampleFilePath("theory-tests.trx")));
+        results.Select(r => r.FullyQualifiedTestName)
+               .Should()
+               .Contain("Acme.Tests.MathTests.AddNumbers(1, 2)");
+        results.Select(r => r.FullyQualifiedTestName)
+               .Should()
+               .Contain("Acme.Tests.MathTests.AddNumbers(0, 0)");
+    }
+
+    [Fact]
+    public void Parse_TheoryTestsTrx_DoesNotAppendSuffixForNonParameterizedTest()
+    {
+        var results = TrxParser.Parse(new FileInfo(GetSampleFilePath("theory-tests.trx")));
+        results.Single(r => r.FullyQualifiedTestName == "Acme.Tests.MathTests.PlainTest")
+               .Should().NotBeNull();
+    }
+
+    [Fact]
+    public void Parse_TheoryTestsTrx_ParsesAllThreeTestResults()
+    {
+        var results = TrxParser.Parse(new FileInfo(GetSampleFilePath("theory-tests.trx")));
+        results.Should().HaveCount(3);
+        results.Count(r => r.Outcome == TestOutcome.Passed).Should().Be(3);
+    }
+
     [ConditionalFact(nameof(NotWindows))]
     public void Parse_Example1OSXTrx_ParsesCodebaseCorrectly()
     {
