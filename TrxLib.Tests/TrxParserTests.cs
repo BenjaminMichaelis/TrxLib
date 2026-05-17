@@ -325,14 +325,11 @@ public class TrxParserTests
         results.Count.Should().Be(recombinedCount);
     }
 
-    // ── Bug regression tests (currently FAILING — prove known bugs) ──────────────
+    // ── Regression tests ─────────────────────────────────────────────────────────
 
     [Fact]
     public void Parse_AbortedOutcomeTrx_AbortedIsNotSilentlyMappedToNotExecuted()
     {
-        // Bug A: The parser's switch default maps any unrecognised outcome string to NotExecuted,
-        // silently losing information. "Aborted" is a real vstest outcome that differs from
-        // NotExecuted (which means "deliberately skipped"). It should NOT become NotExecuted.
         var results = TrxParser.Parse(new FileInfo(GetSampleFilePath("aborted-outcome.trx")));
         results.Should().HaveCount(1);
         results.Single().Outcome.Should().NotBe(TestOutcome.NotExecuted,
@@ -342,9 +339,6 @@ public class TrxParserTests
     [Fact]
     public void Parse_NoNamespaceTrx_ParsesResultsWithoutNamespace()
     {
-        // Bug D: Every child-element lookup in the parser uses a hardcoded namespace
-        // (TrxNs + "Results", TrxNs + "UnitTestResult", etc.). A TRX file that omits
-        // the standard xmlns declaration produces 0 results even though the structure is valid.
         var results = TrxParser.Parse(new FileInfo(GetSampleFilePath("no-namespace.trx")));
         results.Should().HaveCount(3,
             "the parser must fall back to namespace-agnostic element matching when xmlns is absent");
@@ -353,23 +347,15 @@ public class TrxParserTests
     [Fact]
     public void Parse_PublishedCodeBaseTrx_TestProjectDirectoryIsProjectRoot()
     {
-        // Bug C: The parser walks exactly 3 parent directories from the DLL to derive
-        // TestProjectDirectory. This works for bin\Debug\<TFM>\ (3 levels) but gives the
-        // wrong directory for any other layout. A "publish" output places the DLL one level
-        // below the project root, so going up 3 levels overshoots by 2.
-        //
-        // codeBase = C:\dev\acme-project\publish\Acme.Tests.dll
-        // DLL dir  = C:\dev\acme-project\publish\
-        // Up 3     = C:\                          ← current (wrong)
-        // Expected = C:\dev\acme-project\          ← project root (1 level up from publish\)
+        // The sample TRX uses Windows-style paths; skip on other platforms.
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            return; // TRX file contains Windows-style paths; only meaningful on Windows
-        }
+            return;
+
+        // publish\ is a single-level output directory; TestProjectDirectory should be its parent.
         var results = TrxParser.Parse(new FileInfo(GetSampleFilePath("published-codebase.trx")));
         results.Should().HaveCount(1);
         results.Single().TestProjectDirectory?.FullName.Should().Be(@"C:\dev\acme-project",
-            "TestProjectDirectory should be the project root, not 3 arbitrary levels above the DLL");
+            "TestProjectDirectory should be the project root, not an arbitrary number of levels above the DLL");
     }
 
     [Fact]
