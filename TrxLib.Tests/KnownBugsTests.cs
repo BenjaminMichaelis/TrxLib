@@ -3,29 +3,26 @@ using AwesomeAssertions;
 namespace TrxLib.Tests;
 
 /// <summary>
-/// Tests that document currently known bugs found by comparing our object model to the
-/// upstream vstest TRX ObjectModel (commit ba0077af).
-/// Every test in this file is expected to FAIL until the corresponding bug is fixed.
+/// Regression tests for bugs found by comparing our object model to the
+/// upstream vstest TRX ObjectModel.
 /// </summary>
 public class KnownBugsTests
 {
     // -------------------------------------------------------------------------
-    // Bug 3 – Outcomes defined by vstest (Error, Aborted, NotRunnable, Disconnected,
-    //          Warning, Completed, InProgress, PassedButRunAborted) are absent from
-    //          local TestOutcome enum.  The parser's catch-all arm (TrxParser.cs:52)
-    //          maps every unrecognised string to NotExecuted, causing silent
-    //          misclassification of distinct failure modes.
+    // Bug 3 – All vstest outcome strings (Error, Aborted, NotRunnable, Disconnected,
+    //          Warning, Completed, InProgress, PassedButRunAborted) must round-trip
+    //          correctly through the parser. A missing outcome attribute must map
+    //          to TestOutcome.Error, not NotExecuted.
     // -------------------------------------------------------------------------
 
     [Fact]
     public void Bug_Parse_ErrorOutcome_IsNotSilentlyMappedToNotExecuted()
     {
         // vstest writes outcome="Error" when the test adapter itself crashes or the
-        // test process aborts unexpectedly.  This is NOT the same as "not executed".
-        using var trxFile = new TempTrxFile(MinimalTrxWithOutcome("Error"));
+        // test process aborts unexpectedly. This is NOT the same as "not executed".
+        using var trxFile = new TempTrxFile(MinimalTrx(outcome: "Error"));
         var results = TrxParser.Parse(trxFile.FileInfo);
 
-        // FAILS: TrxParser catch-all maps "error" → TestOutcome.NotExecuted (line 52).
         results.Single().Outcome.Should().Be(TestOutcome.Error,
             because: "outcome=\"Error\" is a distinct vstest state indicating a system error");
     }
@@ -35,10 +32,9 @@ public class KnownBugsTests
     {
         // vstest writes outcome="Aborted" when the framework (not the user) terminates
         // the test mid-execution.
-        using var trxFile = new TempTrxFile(MinimalTrxWithOutcome("Aborted"));
+        using var trxFile = new TempTrxFile(MinimalTrx(outcome: "Aborted"));
         var results = TrxParser.Parse(trxFile.FileInfo);
 
-        // FAILS: TrxParser catch-all maps "aborted" → TestOutcome.NotExecuted (line 52).
         results.Single().Outcome.Should().Be(TestOutcome.Aborted,
             because: "outcome=\"Aborted\" is a distinct vstest state and must not be coerced to NotExecuted");
     }
@@ -47,10 +43,9 @@ public class KnownBugsTests
     public void Bug_Parse_NotRunnableOutcome_IsNotSilentlyMappedToNotExecuted()
     {
         // vstest writes outcome="NotRunnable" when ITestElement.IsRunnable == false.
-        using var trxFile = new TempTrxFile(MinimalTrxWithOutcome("NotRunnable"));
+        using var trxFile = new TempTrxFile(MinimalTrx(outcome: "NotRunnable"));
         var results = TrxParser.Parse(trxFile.FileInfo);
 
-        // FAILS: TrxParser catch-all maps "notrunnable" → TestOutcome.NotExecuted (line 52).
         results.Single().Outcome.Should().Be(TestOutcome.NotRunnable,
             because: "outcome=\"NotRunnable\" is a distinct vstest state and must not be coerced to NotExecuted");
     }
@@ -62,66 +57,37 @@ public class KnownBugsTests
         // XmlPersistence.SaveSimpleField() skips writing the attribute when value == default,
         // so a real TRX file with an attachment error has NO outcome= attribute on
         // <UnitTestResult>. A missing attribute is the live form of the Error outcome.
-        using var trxFile = new TempTrxFile(MinimalTrxWithoutOutcome());
+        using var trxFile = new TempTrxFile(MinimalTrx());
         var results = TrxParser.Parse(trxFile.FileInfo);
 
-        // FAILS: null result.Outcome hits catch-all → TestOutcome.NotExecuted instead of TestOutcome.Error.
         results.Single().Outcome.Should().Be(TestOutcome.Error,
             because: "a missing outcome attribute means TestOutcome.Error in vstest's serialization model");
     }
 
     // -------------------------------------------------------------------------
-    // Bug 4 – Test project directory is derived by a hardcoded 3-level upward
-    //          traversal from the codeBase DLL path (TrxParser.cs:96-101).
-    //          This breaks for .NET 8+ RID-qualified output layouts where the DLL
-    //          is 4 levels below the project root:
-    //            <project>/bin/Debug/net8.0/<rid>/Foo.dll
+    // Bug 4 – TestProjectDirectory must be resolved correctly for all standard
+    //          .NET SDK output layouts, including RID-qualified and publish
+    //          subdirectories nested under bin/.
     // -------------------------------------------------------------------------
 
     [Fact]
-    public void Bug_Parse_TestProjectDirectory_IsCorrectForRidQualifiedOutputPath()
-    {
-        // Represents: <project>/bin/Debug/net8.0/win-x64/MyProject.dll
-        // Going up 3 levels lands on bin/ — one level too shallow.
-        var projectRoot = Path.GetFullPath(Path.Combine(Path.GetTempPath(), "fake_project_rid"));
-        var codebase    = Path.Combine(projectRoot, "bin", "Debug", "net8.0", "win-x64", "MyProject.dll");
-
-        using var trxFile = new TempTrxFile(MinimalTrxWithCodebase(codebase));
-        var results = TrxParser.Parse(trxFile.FileInfo);
-
-        // FAILS: hardcoded 3-level traversal returns bin/ instead of the project root.
-        results.Single().TestProjectDirectory!.FullName.TrimEnd(Path.DirectorySeparatorChar)
-            .Should().Be(projectRoot.TrimEnd(Path.DirectorySeparatorChar));
-    }
+    public void Bug_Parse_TestProjectDirectory_IsCorrectForRidQualifiedOutputPath() =>
+        AssertProjectRootResolves("fake_project_rid", "bin", "Debug", "net8.0", "win-x64", "MyProject.dll");
 
     [Fact]
-    public void Bug_Parse_TestProjectDirectory_IsCorrectForPublishOutputPath()
-    {
-        // Represents: <project>/bin/Release/net8.0/publish/MyProject.dll
-        // Going up 3 levels lands on bin/ — one level too shallow.
-        var projectRoot = Path.GetFullPath(Path.Combine(Path.GetTempPath(), "fake_project_publish"));
-        var codebase    = Path.Combine(projectRoot, "bin", "Release", "net8.0", "publish", "MyProject.dll");
-
-        using var trxFile = new TempTrxFile(MinimalTrxWithCodebase(codebase));
-        var results = TrxParser.Parse(trxFile.FileInfo);
-
-        // FAILS: hardcoded 3-level traversal returns bin/ instead of the project root.
-        results.Single().TestProjectDirectory!.FullName.TrimEnd(Path.DirectorySeparatorChar)
-            .Should().Be(projectRoot.TrimEnd(Path.DirectorySeparatorChar));
-    }
+    public void Bug_Parse_TestProjectDirectory_IsCorrectForPublishOutputPath() =>
+        AssertProjectRootResolves("fake_project_publish", "bin", "Release", "net8.0", "publish", "MyProject.dll");
 
     [Fact]
-    public void Bug_Parse_TestProjectDirectory_IsCorrectForRidPlusPublishOutputPath()
+    public void Bug_Parse_TestProjectDirectory_IsCorrectForRidPlusPublishOutputPath() =>
+        AssertProjectRootResolves("fake_project_rid_publish", "bin", "Release", "net8.0", "linux-x64", "publish", "MyProject.dll");
+
+    private static void AssertProjectRootResolves(string subfolder, params string[] relativeSegments)
     {
-        // Represents: <project>/bin/Release/net8.0/linux-x64/publish/MyProject.dll
-        // Going up 3 levels lands on Release/ — two levels too shallow.
-        var projectRoot = Path.GetFullPath(Path.Combine(Path.GetTempPath(), "fake_project_rid_publish"));
-        var codebase    = Path.Combine(projectRoot, "bin", "Release", "net8.0", "linux-x64", "publish", "MyProject.dll");
-
-        using var trxFile = new TempTrxFile(MinimalTrxWithCodebase(codebase));
+        var projectRoot = Path.GetFullPath(Path.Combine(Path.GetTempPath(), subfolder));
+        var codebase = Path.Combine(new[] { projectRoot }.Concat(relativeSegments).ToArray());
+        using var trxFile = new TempTrxFile(MinimalTrx(codeBase: codebase));
         var results = TrxParser.Parse(trxFile.FileInfo);
-
-        // FAILS: hardcoded 3-level traversal returns Release/ instead of the project root.
         results.Single().TestProjectDirectory!.FullName.TrimEnd(Path.DirectorySeparatorChar)
             .Should().Be(projectRoot.TrimEnd(Path.DirectorySeparatorChar));
     }
@@ -130,10 +96,11 @@ public class KnownBugsTests
     // Helpers
     // -------------------------------------------------------------------------
 
-    private static string MinimalTrxWithoutOutcome()
+    private static string MinimalTrx(string? outcome = null, string codeBase = "test.dll")
     {
         const string testId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
         const string execId = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
+        var codebaseXml = codeBase.Replace('\\', '/');
         return $"""
             <?xml version="1.0" encoding="UTF-8"?>
             <TestRun id="cccccccc-cccc-cccc-cccc-cccccccccccc" name="test run"
@@ -145,66 +112,7 @@ public class KnownBugsTests
                   startTime="2024-01-01T00:00:00.0000000Z"
                   endTime="2024-01-01T00:00:00.0000000Z"
                   testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b"
-                  testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d"
-                  relativeResultsDirectory="{execId}" />
-              </Results>
-              <TestDefinitions>
-                <UnitTest name="SomeTest" id="{testId}">
-                  <TestMethod className="SomeNamespace.SomeClass" name="SomeTest"
-                    adapterTypeName="executor://mstestadapter/v2" codeBase="test.dll" />
-                </UnitTest>
-              </TestDefinitions>
-            </TestRun>
-            """;
-    }
-
-    private static string MinimalTrxWithOutcome(string outcome)
-    {
-        const string testId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
-        const string execId = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
-        return $"""
-            <?xml version="1.0" encoding="UTF-8"?>
-            <TestRun id="cccccccc-cccc-cccc-cccc-cccccccccccc" name="test run"
-                     xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
-              <Results>
-                <UnitTestResult executionId="{execId}" testId="{testId}"
-                  testName="SomeNamespace.SomeClass.SomeTest" computerName="host"
-                  duration="00:00:00.0010000"
-                  startTime="2024-01-01T00:00:00.0000000Z"
-                  endTime="2024-01-01T00:00:00.0000000Z"
-                  testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b"
-                  outcome="{outcome}"
-                  testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d"
-                  relativeResultsDirectory="{execId}" />
-              </Results>
-              <TestDefinitions>
-                <UnitTest name="SomeTest" id="{testId}">
-                  <TestMethod className="SomeNamespace.SomeClass" name="SomeTest"
-                    adapterTypeName="executor://mstestadapter/v2" codeBase="test.dll" />
-                </UnitTest>
-              </TestDefinitions>
-            </TestRun>
-            """;
-    }
-
-    private static string MinimalTrxWithCodebase(string codebasePath)
-    {
-        const string testId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
-        const string execId = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
-        // XML attribute value must use forward slashes to avoid escaping issues
-        var codebaseXml = codebasePath.Replace('\\', '/');
-        return $"""
-            <?xml version="1.0" encoding="UTF-8"?>
-            <TestRun id="cccccccc-cccc-cccc-cccc-cccccccccccc" name="test run"
-                     xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
-              <Results>
-                <UnitTestResult executionId="{execId}" testId="{testId}"
-                  testName="SomeNamespace.SomeClass.SomeTest" computerName="host"
-                  duration="00:00:00.0010000"
-                  startTime="2024-01-01T00:00:00.0000000Z"
-                  endTime="2024-01-01T00:00:00.0000000Z"
-                  testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b"
-                  outcome="Passed"
+                  {(outcome is null ? "" : $"outcome=\"{outcome}\"")}
                   testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d"
                   relativeResultsDirectory="{execId}" />
               </Results>
