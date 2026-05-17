@@ -43,25 +43,22 @@ public class TrxParser
 
             var outcome = result.Outcome?.ToLowerInvariant() switch
             {
-                "passed" => TestOutcome.Passed,
-                "failed" => TestOutcome.Failed,
-                "notexecuted" => TestOutcome.NotExecuted,
-                "inconclusive" => TestOutcome.Inconclusive,
-                "timeout" => TestOutcome.Timeout,
-                "pending" => TestOutcome.Pending,
-                "aborted" => TestOutcome.Aborted,
-                "disconnected" => TestOutcome.Disconnected,
-                "warning" => TestOutcome.Warning,
-                "error" => TestOutcome.Error,
-                "notrunnable" => TestOutcome.NotRunnable,
-                "passedbutrunaborted" => TestOutcome.PassedButRunAborted,
-                "inprogress" => TestOutcome.InProgress,
-                "completed" => TestOutcome.Completed,
-                // A null/absent outcome attribute means Error in vstest's serialization:
-                // TestOutcome.Error is ordinal 0 (the enum default), so XmlPersistence
-                // omits the attribute when outcome == Error.
-                null => TestOutcome.Error,
-                _ => TestOutcome.NotExecuted
+                "passed"               => TestOutcome.Passed,
+                "failed"               => TestOutcome.Failed,
+                "notexecuted"          => TestOutcome.NotExecuted,
+                "inconclusive"         => TestOutcome.Inconclusive,
+                "timeout"              => TestOutcome.Timeout,
+                "pending"              => TestOutcome.Pending,
+                "error"                => TestOutcome.Error,
+                "aborted"              => TestOutcome.Aborted,
+                "notrunnable"          => TestOutcome.NotRunnable,
+                "disconnected"         => TestOutcome.Disconnected,
+                "warning"              => TestOutcome.Warning,
+                "completed"            => TestOutcome.Completed,
+                "inprogress"           => TestOutcome.InProgress,
+                "passedbutrunaborted"  => TestOutcome.PassedButRunAborted,
+                null                   => TestOutcome.Error,
+                _                      => TestOutcome.NotExecuted
             };
 
             DateTimeOffset? resultStartTime = null, resultEndTime = null;
@@ -242,7 +239,6 @@ public class TrxParser
 
         var ns = root.Name.Namespace;
 
-
         var testRun = new TestRun
         {
             Name = (string?)root.Attribute("name"),
@@ -251,7 +247,7 @@ public class TrxParser
         };
 
         var timesEl = root.Element(ns + "Times");
-        if (timesEl != null)
+        if (timesEl is not null)
         {
             testRun.Times = new Times
             {
@@ -263,7 +259,7 @@ public class TrxParser
         }
 
         var testSettingsEl = root.Element(ns + "TestSettings");
-        if (testSettingsEl != null)
+        if (testSettingsEl is not null)
         {
             testRun.TestSettings = new TestSettings
             {
@@ -276,7 +272,7 @@ public class TrxParser
         }
 
         var testDefsEl = root.Element(ns + "TestDefinitions");
-        if (testDefsEl != null)
+        if (testDefsEl is not null)
         {
             testRun.TestDefinitions = new TestDefinitions
             {
@@ -304,7 +300,7 @@ public class TrxParser
         }
 
         var resultsEl = root.Element(ns + "Results");
-        if (resultsEl != null)
+        if (resultsEl is not null)
         {
             testRun.Results = new Results
             {
@@ -348,7 +344,7 @@ public class TrxParser
         }
 
         var resultSummaryEl = root.Element(ns + "ResultSummary");
-        if (resultSummaryEl != null)
+        if (resultSummaryEl is not null)
         {
             Counters? counters = null;
             if (resultSummaryEl.Element(ns + "Counters") is XElement countersEl)
@@ -390,7 +386,7 @@ public class TrxParser
         }
 
         var testListsEl = root.Element(ns + "TestLists");
-        if (testListsEl != null)
+        if (testListsEl is not null)
         {
             testRun.TestLists = new TestLists
             {
@@ -403,7 +399,7 @@ public class TrxParser
         }
 
         var testEntriesEl = root.Element(ns + "TestEntries");
-        if (testEntriesEl != null)
+        if (testEntriesEl is not null)
         {
             testRun.TestEntries = new TestEntries
             {
