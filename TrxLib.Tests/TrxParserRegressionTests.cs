@@ -1,6 +1,6 @@
 using System.IO;
 
-using AwesomeAssertions;
+using TUnit.Assertions;
 
 namespace TrxLib.Tests;
 
@@ -17,11 +17,11 @@ public class TrxParserRegressionTests
     [Arguments("Aborted",     TestOutcome.Aborted)]
     [Arguments("NotRunnable", TestOutcome.NotRunnable)]
     [Arguments(null,          TestOutcome.Error)] // absent attribute = Error
-    public void Parse_OutcomeAttribute_RoundTrips(string? outcomeAttr, TestOutcome expected)
+    public async Task Parse_OutcomeAttribute_RoundTrips(string? outcomeAttr, TestOutcome expected)
     {
         using var trxFile = new TempTrxFile(MinimalTrx(outcome: outcomeAttr));
         var results = TrxParser.Parse(trxFile.FileInfo);
-        results.Single().Outcome.Should().Be(expected);
+        await Assert.That(results.Single().Outcome).IsEqualTo(expected);
     }
 
     // TestProjectDirectory must resolve to the project root for all standard .NET SDK
@@ -34,14 +34,14 @@ public class TrxParserRegressionTests
     ];
 
     [Test, MethodDataSource(nameof(DirectoryLayouts))]
-    public void Parse_TestProjectDirectory_ResolvesFromBinAnchor(string subfolder, string[] segments)
+    public async Task Parse_TestProjectDirectory_ResolvesFromBinAnchor(string subfolder, string[] segments)
     {
         var projectRoot = Path.GetFullPath(Path.Combine(Path.GetTempPath(), subfolder));
         var codebase = Path.Combine(new[] { projectRoot }.Concat(segments).ToArray());
         using var trxFile = new TempTrxFile(MinimalTrx(codeBase: codebase));
         var results = TrxParser.Parse(trxFile.FileInfo);
-        results.Single().TestProjectDirectory!.FullName.TrimEnd(Path.DirectorySeparatorChar)
-            .Should().Be(projectRoot.TrimEnd(Path.DirectorySeparatorChar));
+        await Assert.That(results.Single().TestProjectDirectory!.FullName.TrimEnd(Path.DirectorySeparatorChar))
+            .IsEqualTo(projectRoot.TrimEnd(Path.DirectorySeparatorChar));
     }
 
     // -------------------------------------------------------------------------
