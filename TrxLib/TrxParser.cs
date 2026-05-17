@@ -18,22 +18,22 @@ public class TrxParser
     {
         using var stream = trxFile.OpenRead();
         TestRun? testRun = DeserializeTestRun(stream);
-        if (testRun == null)
+        if (testRun is null)
             return new TestResultSet();
 
         // Build a lookup for UnitTest definitions
-        var testDefinitions = testRun.TestDefinitions?.UnitTests?.Where(u => u.Id != null).ToDictionary(u => u.Id!) ?? new();
+        var testDefinitions = testRun.TestDefinitions?.UnitTests?.Where(u => u.Id is not null).ToDictionary(u => u.Id!) ?? new();
 
         var results = new List<TestResult>();
         foreach (var result in testRun.Results?.UnitTestResults ?? Enumerable.Empty<UnitTestResult>())
         {
             // Find the test definition
             UnitTest? unitTest = null;
-            if (result.TestId != null)
+            if (result.TestId is not null)
                 testDefinitions.TryGetValue(result.TestId, out unitTest);
             var testMethod = unitTest?.TestMethod;
 
-            var testMethodDomain = testMethod == null ? null : new TestMethod
+            var testMethodDomain = testMethod is null ? null : new TestMethod
             {
                 CodeBase = testMethod.CodeBase ?? string.Empty,
                 ClassName = testMethod.ClassName ?? string.Empty,
@@ -43,13 +43,25 @@ public class TrxParser
 
             var outcome = result.Outcome?.ToLowerInvariant() switch
             {
-                "passed" => TestOutcome.Passed,
-                "failed" => TestOutcome.Failed,
-                "notexecuted" => TestOutcome.NotExecuted,
-                "inconclusive" => TestOutcome.Inconclusive,
-                "timeout" => TestOutcome.Timeout,
-                "pending" => TestOutcome.Pending,
-                _ => TestOutcome.NotExecuted
+                "passed"               => TestOutcome.Passed,
+                "failed"               => TestOutcome.Failed,
+                "notexecuted"          => TestOutcome.NotExecuted,
+                "inconclusive"         => TestOutcome.Inconclusive,
+                "timeout"              => TestOutcome.Timeout,
+                "pending"              => TestOutcome.Pending,
+                "error"                => TestOutcome.Error,
+                "aborted"              => TestOutcome.Aborted,
+                "notrunnable"          => TestOutcome.NotRunnable,
+                "disconnected"         => TestOutcome.Disconnected,
+                "warning"              => TestOutcome.Warning,
+                "completed"            => TestOutcome.Completed,
+                "inprogress"           => TestOutcome.InProgress,
+                "passedbutrunaborted"  => TestOutcome.PassedButRunAborted,
+                // A null/absent outcome attribute means Error in vstest's serialization:
+                // TestOutcome.Error is ordinal 0 (the enum default), so XmlPersistence
+                // omits the attribute when outcome == Error.
+                null                   => TestOutcome.Error,
+                _                      => TestOutcome.NotExecuted
             };
 
             DateTimeOffset? resultStartTime = null, resultEndTime = null;
@@ -63,7 +75,7 @@ public class TrxParser
 
             // Build the fully qualified test name correctly
             string fullyQualifiedTestName = string.Empty;
-            if (testMethodDomain != null)
+            if (testMethodDomain is not null)
             {
                 if (!string.IsNullOrEmpty(testMethodDomain.ClassName) && !string.IsNullOrEmpty(testMethodDomain.Name))
                 {
@@ -86,7 +98,7 @@ public class TrxParser
                         else if (result.TestName.StartsWith(methodShortName, StringComparison.Ordinal))
                             candidate = result.TestName.Substring(methodShortName.Length);
 
-                        if (candidate?.StartsWith("(", StringComparison.Ordinal) == true)
+                        if (candidate?.StartsWith("(", StringComparison.Ordinal) is true)
                             paramSuffix = candidate;
                     }
                     fullyQualifiedTestName = baseFqtn + paramSuffix;
@@ -108,17 +120,24 @@ public class TrxParser
                 codebaseFile = new FileInfo(testMethodDomain.CodeBase);
             }
 
-            // Calculate test project directory from codebase if available
+            // Calculate test project directory from codebase if available.
+            // Walk up to the 'bin' folder, then take its parent — this handles
+            // all standard .NET SDK output layouts:
+            //   bin/{config}/{tfm}/                 (depth 3 — classic)
+            //   bin/{config}/{tfm}/{rid}/            (depth 4 — self-contained)
+            //   bin/{config}/{tfm}/publish/          (depth 4 — publish output)
+            //   bin/{config}/{tfm}/{rid}/publish/    (depth 5 — self-contained publish)
             DirectoryInfo? testProjectDirectory = null;
-            if (codebaseFile != null && codebaseFile.Directory != null)
+            if (codebaseFile?.Directory is { } dir)
             {
-                // Go up 3 levels to get the project directory (bin/Debug/netcoreappX.X/)
-                var dir = codebaseFile.Directory;
-                for (int i = 0; i < 3 && dir?.Parent != null; i++)
+                while (dir.Parent is not null && !string.Equals(dir.Name, "bin", StringComparison.OrdinalIgnoreCase))
                 {
                     dir = dir.Parent;
                 }
-                testProjectDirectory = dir;
+                // Return the parent of the 'bin' folder (the project root).
+                // If no 'bin' folder was found, leave testProjectDirectory as null.
+                if (string.Equals(dir.Name, "bin", StringComparison.OrdinalIgnoreCase))
+                    testProjectDirectory = dir.Parent;
             }
 
             // Extract StdOut if available
@@ -161,14 +180,14 @@ public class TrxParser
         };
 
         // Set timing properties from the Times element if available
-        if (creationTime.HasValue)
-            testResultSet.CreatedTime = creationTime.Value;
-        if (queueingTime.HasValue)
-            testResultSet.QueuedTime = queueingTime.Value;
-        if (startTime.HasValue)
-            testResultSet.StartedTime = startTime.Value;
-        if (finishTime.HasValue)
-            testResultSet.CompletedTime = finishTime.Value;
+        if (creationTime is { } created)
+            testResultSet.CreatedTime = created;
+        if (queueingTime is { } queued)
+            testResultSet.QueuedTime = queued;
+        if (startTime is { } started)
+            testResultSet.StartedTime = started;
+        if (finishTime is { } finished)
+            testResultSet.CompletedTime = finished;
 
         return testResultSet;
     }
@@ -186,7 +205,7 @@ public class TrxParser
         }
 
         var root = doc.Root;
-        if (root == null)
+        if (root is null)
             return null;
 
         var testRun = new TestRun
@@ -197,7 +216,7 @@ public class TrxParser
         };
 
         var timesEl = root.Element(TrxNs + "Times");
-        if (timesEl != null)
+        if (timesEl is not null)
         {
             testRun.Times = new Times
             {
@@ -209,7 +228,7 @@ public class TrxParser
         }
 
         var testSettingsEl = root.Element(TrxNs + "TestSettings");
-        if (testSettingsEl != null)
+        if (testSettingsEl is not null)
         {
             testRun.TestSettings = new TestSettings
             {
@@ -222,7 +241,7 @@ public class TrxParser
         }
 
         var testDefsEl = root.Element(TrxNs + "TestDefinitions");
-        if (testDefsEl != null)
+        if (testDefsEl is not null)
         {
             testRun.TestDefinitions = new TestDefinitions
             {
@@ -237,7 +256,7 @@ public class TrxParser
                         Execution = ut.Element(TrxNs + "Execution") is XElement execEl
                             ? new Execution { Id = (string?)execEl.Attribute("id") }
                             : null,
-                        TestMethod = tmEl != null ? new TestMethod
+                        TestMethod = tmEl is not null ? new TestMethod
                         {
                             CodeBase = (string?)tmEl.Attribute("codeBase"),
                             ClassName = (string?)tmEl.Attribute("className"),
@@ -250,7 +269,7 @@ public class TrxParser
         }
 
         var resultsEl = root.Element(TrxNs + "Results");
-        if (resultsEl != null)
+        if (resultsEl is not null)
         {
             testRun.Results = new Results
             {
@@ -294,7 +313,7 @@ public class TrxParser
         }
 
         var resultSummaryEl = root.Element(TrxNs + "ResultSummary");
-        if (resultSummaryEl != null)
+        if (resultSummaryEl is not null)
         {
             Counters? counters = null;
             if (resultSummaryEl.Element(TrxNs + "Counters") is XElement countersEl)
@@ -336,7 +355,7 @@ public class TrxParser
         }
 
         var testListsEl = root.Element(TrxNs + "TestLists");
-        if (testListsEl != null)
+        if (testListsEl is not null)
         {
             testRun.TestLists = new TestLists
             {
@@ -349,7 +368,7 @@ public class TrxParser
         }
 
         var testEntriesEl = root.Element(TrxNs + "TestEntries");
-        if (testEntriesEl != null)
+        if (testEntriesEl is not null)
         {
             testRun.TestEntries = new TestEntries
             {

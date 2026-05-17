@@ -81,5 +81,5 @@ public enum TestOutcome
     /// <summary>
     /// Test is in the execution queue, was not started yet.
     /// </summary>
-    Pending
+    Pending,
 }
