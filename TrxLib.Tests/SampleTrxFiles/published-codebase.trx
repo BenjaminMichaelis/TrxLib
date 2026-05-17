@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="a1b2c3d4-0000-0000-0000-000000000003" name="user@machine 2026-01-01 00:00:00" runUser="user" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-01-01T00:00:00.0000000+00:00" queuing="2026-01-01T00:00:00.0000001+00:00" start="2026-01-01T00:00:00.0000002+00:00" finish="2026-01-01T00:00:01.0000000+00:00" />
+  <TestSettings name="default" id="a1b2c3d4-0000-0000-0000-000000000004">
+    <Deployment runDeploymentRoot="user_machine_2026-01-01_00_00_00" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="a1b2c3d4-0000-0000-0001-000000000002" testId="a1b2c3d4-0000-0000-0002-000000000002" testName="Acme.Tests.SampleTests.Test_Passes" computerName="machine" duration="00:00:00.0010000" startTime="2026-01-01T00:00:00.5000000+00:00" endTime="2026-01-01T00:00:00.5010000+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a1b2c3d4-0000-0000-0001-000000000002" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Acme.Tests.SampleTests.Test_Passes" storage="c:\dev\acme-project\publish\acme.tests.dll" id="a1b2c3d4-0000-0000-0002-000000000002">
+      <Execution id="a1b2c3d4-0000-0000-0001-000000000002" />
+      <TestMethod codeBase="C:\dev\acme-project\publish\Acme.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Acme.Tests.SampleTests" name="Test_Passes" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="a1b2c3d4-0000-0000-0002-000000000002" executionId="a1b2c3d4-0000-0000-0001-000000000002" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="1" executed="1" passed="1" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+  </ResultSummary>
+</TestRun>
