@@ -42,7 +42,7 @@ See: https://learn.microsoft.com/visualstudio/msbuild/customize-your-build
      <PackageProjectUrl>https://github.com/BenjaminMichaelis/TrxLib</PackageProjectUrl> 
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <PackageTags>trx test-results xml parser</PackageTags>
+    <PackageTags>trx;test-results;xml;parser</PackageTags>
   </PropertyGroup>
 
   <PropertyGroup Label="SourceLink">
