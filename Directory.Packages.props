@@ -11,6 +11,7 @@
   <!-- This property enables the Central Package Management feature -->
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <!--
   This defines the set of centrally managed packages.
