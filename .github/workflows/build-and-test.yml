@@ -49,6 +49,7 @@ jobs:
         uses: actions/setup-dotnet@v6
         with:
           global-json-file: "./global.json"
+          dotnet-version: '10.0.x'
   
       - name: Restore dependencies
         run: dotnet restore
@@ -64,4 +65,4 @@ jobs:
           $rid = if ($env:RUNNER_OS -eq 'Windows') { 'win-x64' } else { 'linux-x64' }
           dotnet publish TrxLib.AotSample/TrxLib.AotSample.csproj -r $rid -c Release --self-contained
           $ext = if ($env:RUNNER_OS -eq 'Windows') { '.exe' } else { '' }
-          & "TrxLib.AotSample/bin/Release/net10.0/$rid/publish/TrxLib.AotSample$ext"
+          & "TrxLib.AotSample/bin/Release/net11.0/$rid/publish/TrxLib.AotSample$ext"
