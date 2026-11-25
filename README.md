@@ -10,6 +10,17 @@ TrxLib is a .NET library for parsing and analyzing TRX (Test Results XML) files 
 - Process test run metadata including timing information, deployment settings, and run configuration
 - Group test results by outcome (passed, failed, not executed, etc.)
 
+## Compatibility and development
+
+The library targets .NET Standard 2.1, .NET 10, and .NET 11. The dedicated .NET 8 target has been removed; older compatible runtimes can still use the .NET Standard 2.1 asset.
+
+Building from source requires the .NET 11 SDK selected by `global.json`. All projects use C# 15. Tests run on both .NET 10 and .NET 11, so install both runtimes when running the full suite. The NativeAOT sample targets .NET 11.
+
+```powershell
+dotnet build TrxLib.slnx --configuration Release
+dotnet test --project TrxLib.Tests\TrxLib.Tests.csproj --configuration Release --no-build
+```
+
 ## Installation
 
 TrxLib is available as a NuGet package: https://www.nuget.org/packages/TrxLib
